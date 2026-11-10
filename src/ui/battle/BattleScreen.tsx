@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { PlayerAction } from '../../battle/engine';
 import { STATUS_SHORT, calcStats, expForLevel, isShiny, monName, spec, type Mon, type MoveSlot } from '../../battle/mon';
 import type { BattleSession, SideView } from '../../battle/session';
-import { MOVES } from '../../data/moves';
+import { MOVES, type MoveData } from '../../data/moves';
+import { SPECIES } from '../../data/species';
+import { effectiveness, type Type } from '../../data/types';
 import { josa } from '../../engine/josa';
 import { useStore } from '../../engine/store';
 import { useButtons } from '../../engine/input';
@@ -34,7 +36,14 @@ export function BattleScreen({ session }: { session: BattleSession }) {
       {player.visible && player.mon && <PlayerHud side={player} />}
       <div className="battle-bottom">
         {s.prompt ? (
-          <ActionMenu key={s.prompt.mon.uid + s.tick} mon={s.prompt.mon} moves={s.prompt.moves} trainer={s.kind === 'trainer'} resolve={s.prompt.resolve} />
+          <ActionMenu
+            key={s.prompt.mon.uid + s.tick}
+            mon={s.prompt.mon}
+            moves={s.prompt.moves}
+            trainer={s.kind === 'trainer'}
+            foe={enemy.mon ? SPECIES[enemy.form ?? enemy.mon.species].types : null}
+            resolve={s.prompt.resolve}
+          />
         ) : s.message ? (
           <TextBox key={s.message.key} text={s.message.text} onDone={() => session.messageDone()} auto={1000} width={232} className="textbox battle-text" />
         ) : (
@@ -183,7 +192,18 @@ function PartyBalls({ party, className }: { party: Mon[]; className: string }) {
   );
 }
 
-function ActionMenu({ mon, moves, trainer, resolve }: { mon: Mon; moves: MoveSlot[]; trainer: boolean; resolve: (a: PlayerAction) => void }) {
+/** 상대 타입에 대한 효과: 좋음 / 보통 / 나쁨 / 없음. 변화 기술은 상태 이상이 안 통할 때만 '없음' */
+function effectLabel(mv: MoveData, foe: readonly Type[] | null): { label: string; cls: string } | null {
+  if (!foe) return null;
+  const e = effectiveness(mv.type, foe);
+  if (mv.power === 0) return mv.status && e === 0 ? { label: '효과 없음', cls: 'none' } : null;
+  if (e === 0) return { label: '효과 없음', cls: 'none' };
+  if (e > 1) return { label: '효과 좋음', cls: 'good' };
+  if (e < 1) return { label: '효과 나쁨', cls: 'bad' };
+  return { label: '효과 보통', cls: 'normal' };
+}
+
+function ActionMenu({ mon, moves, trainer, foe, resolve }: { mon: Mon; moves: MoveSlot[]; trainer: boolean; foe: readonly Type[] | null; resolve: (a: PlayerAction) => void }) {
   const [mode, setMode] = useState<'main' | 'moves'>('main');
   const [busy, setBusy] = useState(false);
   const [cur, setCur] = useState(0);
@@ -214,7 +234,9 @@ function ActionMenu({ mon, moves, trainer, resolve }: { mon: Mon; moves: MoveSlo
           <Menu
             columns={2}
             visible={2}
-            items={moves.map((s) => ({ label: <span className={s.pp <= 0 ? 'nopp' : ''}>{MOVES[s.id].name}</span> }))}
+            items={moves.map((s) => ({
+              label: <span className={`${s.pp <= 0 ? 'nopp' : ''}${MOVES[s.id].name.length >= 6 ? ' long' : ''}`}>{MOVES[s.id].name}</span>,
+            }))}
             onMove={setCur}
             onSelect={(k) => (moves[k].pp <= 0 ? setWarn('기술의 남은 포인트가 없다!') : resolve({ kind: 'fight', move: k }))}
             onCancel={() => setMode('main')}
@@ -227,11 +249,20 @@ function ActionMenu({ mon, moves, trainer, resolve }: { mon: Mon; moves: MoveSlo
           ) : (
             mv && (
               <>
-                <div>
-                  PP {moves[cur].pp}/{mv.pp}
+                <div className="mi-row">
+                  <TypeTag type={mv.type} />
+                  <span>
+                    PP {moves[cur].pp}/{mv.pp}
+                  </span>
                 </div>
-                <TypeTag type={mv.type} />
-                <div className="small">위력 {mv.power > 1 ? mv.power : '-'}</div>
+                <div className="mi-row">
+                  <span>{mv.power === 0 ? '변화 기술' : `위력 ${mv.power > 1 ? mv.power : '-'}`}</span>
+                  {(() => {
+                    const e = effectLabel(mv, foe);
+                    return e && <span className={`eff ${e.cls}`}>{e.label}</span>;
+                  })()}
+                </div>
+                <div className="mi-desc">{mv.desc}</div>
               </>
             )
           )}

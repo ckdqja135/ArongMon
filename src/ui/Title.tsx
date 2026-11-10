@@ -16,7 +16,8 @@ export function Title() {
   useButtons((b) => (b === 'a' || b === 'start') && setStage('menu'), stage === 'press');
 
   const start = async (k: number) => {
-    const items = saved ? ['continue', 'new'] : ['new'];
+    // 기록이 없으면 '이어서 하기' 대신 파일에서 기록을 가져올 수 있다
+    const items = saved ? ['continue', 'new'] : ['new', 'continue'];
     if (items[k] === 'continue') {
       const slot = await openSlots('load');
       if (slot !== null) G.continueGame(slot);
@@ -39,7 +40,7 @@ export function Title() {
         <div className="press-start">PRESS START</div>
       ) : (
         <Frame className="title-menu">
-          <Menu items={saved ? ['이어서 하기', '처음부터 하기'] : ['처음부터 하기']} onSelect={start} onCancel={() => setStage('press')} />
+          <Menu items={saved ? ['이어서 하기', '처음부터 하기'] : ['처음부터 하기', '기록 가져오기']} onSelect={start} onCancel={() => setStage('press')} />
         </Frame>
       )}
     </div>

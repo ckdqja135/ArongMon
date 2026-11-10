@@ -226,3 +226,42 @@ export function arongFieldFrame(species: string, dir: Dir, frame: 0 | 1 | 2): Gr
   if (view === 'left') return dir === 'right' ? flipH(g) : g;
   return frame === 2 ? g.map((r, y) => (y < 14 ? r : [...r].reverse())) : g;
 }
+
+// ── 자전거 뒷자리에 탄 아롱이 (헬멧을 썼다) ──
+// 색 9 헬멧(노랑, 플레이어의 빨간 모자와 헷갈리지 않게), 10 헬멧 그늘, 11 헬멧 빛
+export const RIDER_PAL: Palette = [...ARONG_FIELD_PAL, '#f8c030', '#c88818', '#fff0a0'];
+
+/** 단계·방향마다 헬멧 자리: 테두리 줄 y, 왼쪽 x0 ~ 오른쪽 x1 (눈 바로 위, 귀는 헬멧 밖으로 나온다) */
+const HELMET: Record<string, Record<View, [number, number, number]>> = {
+  arong: { down: [6, 2, 13], up: [6, 2, 13], left: [6, 1, 8] },
+  arong2: { down: [5, 3, 12], up: [5, 3, 12], left: [4, 1, 8] },
+  arong3: { down: [4, 3, 12], up: [4, 3, 12], left: [3, 1, 8] },
+};
+
+/** 뒷자리의 아롱이: 머리만 잘라 헬멧을 씌우고, 앞모습이 아니면 아래에 바구니를 단다.
+ *  옆모습은 바구니에서 화면 쪽을 보고(얼굴이 보이게), 뒷모습은 뒤통수, 앞모습은 플레이어 어깨 너머로 머리만 내민다 */
+export function arongRiderFrame(species: string, dir: Dir): Grid {
+  const view: View = dir === 'up' ? 'up' : 'down';
+  const [y, x0, x1] = HELMET[species][view];
+  const full = arongFieldFrame(species, view, 0).map((r) => [...r]);
+  const put = (x: number, yy: number, c: number) => {
+    if (yy >= 0 && x >= 0 && x < 16) full[yy][x] = c;
+  };
+  // 둥근 헬멧: 맨 위 외곽선 → 반짝이는 윗면 → 옆선 → 그늘진 테두리 (귀는 헬멧 밖으로 나온다)
+  for (let x = x0 + 2; x <= x1 - 2; x++) put(x, y - 3, 1);
+  for (let x = x0 + 1; x <= x1 - 1; x++) put(x, y - 2, x === x0 + 1 || x === x1 - 1 ? 1 : x === x0 + 2 || x === x0 + 3 ? 11 : 9);
+  for (let x = x0; x <= x1; x++) put(x, y - 1, x === x0 || x === x1 ? 1 : 9);
+  for (let x = x0; x <= x1; x++) put(x, y, x === x0 || x === x1 ? 1 : 10);
+  // 머리만: 눈과 주둥이까지
+  const head = full.slice(0, y + 4).map((r) => r.slice(x0 - 1, x1 + 2));
+  // 위쪽 빈 줄은 잘라 낸다
+  while (head.length && head[0].every((c) => c < 0)) head.shift();
+  if (dir !== 'down') {
+    // 엮은 바구니 (후드티 갈색 두 가지로 엇갈린 무늬)
+    const w = head[0].length;
+    head.push(Array.from({ length: w }, () => 1));
+    for (let r = 0; r < 2; r++) head.push(Array.from({ length: w }, (_, x) => (x === 0 || x === w - 1 ? 1 : (x + r) % 2 ? 5 : 6)));
+    head.push(Array.from({ length: w }, (_, x) => (x === 0 || x === w - 1 ? -1 : 1)));
+  }
+  return head;
+}

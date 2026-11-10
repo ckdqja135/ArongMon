@@ -106,6 +106,27 @@ export function writeSave(slot: number, s: SaveData) {
 
 export const hasSave = () => SLOTS.some((n) => !!loadSave(n));
 
+// ── 파일로 내보내기 / 가져오기 ──
+const FILE_TAG = 'alongmon-save';
+
+/** 슬롯의 기록을 파일에 쓸 JSON 글로 */
+export function exportSave(slot: number): string | null {
+  const s = loadSave(slot);
+  return s ? JSON.stringify({ game: FILE_TAG, version: 1, exportedAt: new Date().toISOString(), save: s }, null, 2) : null;
+}
+
+/** 내보낸 파일(또는 세이브 JSON 그대로)을 읽는다. 아롱몬 기록이 아니면 null */
+export function parseSaveFile(text: string): SaveData | null {
+  try {
+    const raw = JSON.parse(text);
+    const s = (raw?.game === FILE_TAG ? raw.save : raw) as SaveData;
+    const ok = s && typeof s.playerName === 'string' && Array.isArray(s.party) && Array.isArray(s.box) && typeof s.pos?.map === 'string';
+    return ok ? migrate(s) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** 슬롯 고르기 화면에 보여 줄 요약 */
 export interface SlotInfo { name: string; map: string; badges: number; caught: number; seconds: number }
 export function slotInfo(slot: number): SlotInfo | null {

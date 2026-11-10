@@ -1,6 +1,6 @@
 // 픽셀 그리드를 캔버스로 바꿔 캐시한다 (브라우저 전용).
 import { FRONT_ONLY, MON_ART, monPalette } from '../data/monArt';
-import { ARONG_FIELD_PAL, arongFieldFrame, hasFieldArt } from './arongField';
+import { ARONG_FIELD_PAL, RIDER_PAL, arongFieldFrame, arongRiderFrame, hasFieldArt } from './arongField';
 import { BADGE_ART, dimPalette } from './badgeArt';
 import { battleBgGrid, platformGrid, type BattleTerrain, type BattleTime } from './battleBg';
 import { artPending, fieldBox, loadMonArt, monOverride } from './monOverrides';
@@ -146,6 +146,10 @@ export const ballCanvas = (id: BallId) => cached(`ball:${id}`, () => gridCanvas(
 /** HP 창의 가진 몬스터 수 (8x8). 기절했으면 회색 */
 export const smallBallCanvas = (fainted: boolean) => cached(`ballS:${fainted}`, () => gridCanvas(smallBallGrid('capsule'), ballPalette('capsule', fainted)));
 /** 자전거 (16x11). 옆모습은 바퀴 두 개, 앞/뒷모습은 바퀴 하나 */
+/** 자전거 뒷자리의 아롱이 (헬멧) */
+export const arongRiderCanvas = (species: string, dir: Dir) =>
+  cached(`rider:${species}:${dir}`, () => gridCanvas(arongRiderFrame(species, dir), RIDER_PAL));
+
 export function bikeCanvas(dir: Dir) {
   return cached(`bike:${dir}`, () => {
     const W = 16, H = 11;

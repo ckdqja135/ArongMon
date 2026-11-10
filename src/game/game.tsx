@@ -71,6 +71,7 @@ class Game {
       followerSpecies: () => this.save.party.find((m) => m.hp > 0)?.species ?? null,
       talkFollower: () => void this.run(() => SCRIPTS.follower()),
       riding: () => this.riding,
+      bikeBuddy: () => this.save.party.find((m) => spec(m).unlimitedMoves)?.species ?? null,
       water: (dir) => void this.run(() => this.atWater(dir)),
       select: () => void this.run(() => this.toggleBike()),
     });

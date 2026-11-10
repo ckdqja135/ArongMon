@@ -42,12 +42,12 @@ const m = (name: string, type: Type, power: number, acc: number, pp: number, des
 export const MOVES = {
   // 아롱이 전용 (무상성)
   bodycheck: m('몸통박치기', 'typeless', 40, 100, 35, '몸을 날려 상대에게 부딪친다.'),
-  nibble: m('물기', 'typeless', 60, 100, 25, '이빨로 문다. 상대를 풀죽게 할 때가 있다.', { flinch: true, chance: 30 }),
-  bark: m('짖기', 'typeless', 0, 100, 30, '크게 짖어 상대의 방어를 떨어뜨린다. 상대가 움찔해서 몇 턴 동안 움직이지 못할 때가 있다.', {
+  nibble: m('물기', 'typeless', 60, 100, 25, '이빨로 문다. 풀죽게 할 때가 있다.', { flinch: true, chance: 30 }),
+  bark: m('짖기', 'typeless', 0, 100, 30, '짖어서 방어를 낮춘다. 움찔할 때도.', {
     stat: [{ s: 'def', n: -1 }],
     startle: { chance: 30, turns: [1, 3] },
   }),
-  charm: m('애교부리기', 'typeless', 0, 100, 20, '귀엽게 애교를 부려 상대의 공격을 크게 떨어뜨린다.', { stat: [{ s: 'atk', n: -2 }] }),
+  charm: m('애교부리기', 'typeless', 0, 100, 20, '애교를 부려 상대의 공격을 크게 낮춘다.', { stat: [{ s: 'atk', n: -2 }] }),
   // 노말
   tackle: m('부딪치기', 'normal', 35, 95, 35, '몸을 부딪쳐 공격한다.'),
   scratch: m('할퀴기', 'normal', 40, 100, 35, '날카로운 발톱으로 할퀸다.'),
@@ -55,7 +55,7 @@ export const MOVES = {
   wink: m('깜빡눈', 'normal', 0, 100, 30, '상대의 방어를 떨어뜨린다.', { stat: [{ s: 'def', n: -1 }] }),
   quick: m('번개걸음', 'normal', 40, 100, 30, '반드시 먼저 공격한다.', { priority: 1 }),
   slam: m('짓누르기', 'normal', 85, 100, 15, '몸무게로 짓누른다. 마비시킬 때가 있다.', { status: 'par', chance: 30 }),
-  takedown: m('돌진', 'normal', 90, 85, 20, '강하게 돌진한다. 자신도 데미지를 입는다.', { recoil: 1 / 4 }),
+  takedown: m('돌진', 'normal', 90, 85, 20, '세게 돌진한다. 자신도 반동을 입는다.', { recoil: 1 / 4 }),
   fang: m('앞니깨물기', 'normal', 80, 90, 15, '앞니로 문다. 풀죽게 할 때가 있다.', { flinch: true, chance: 10 }),
   slash: m('베어가르기', 'normal', 70, 100, 20, '급소에 맞기 쉽다.', { highCrit: true }),
   rest: m('쉬어가기', 'normal', 0, 0, 10, 'HP를 최대 HP의 절반만큼 회복한다.', { heal: 1 / 2 }),
@@ -65,8 +65,8 @@ export const MOVES = {
   furyswipes: m('연타', 'normal', 18, 80, 15, '2~5회 연속으로 공격한다.', { hits: [2, 5] }),
   starfall: m('별가루', 'normal', 60, 0, 20, '반드시 맞는 별 모양 빛을 쏜다.'),
   megastrike: m('필살일격', 'normal', 120, 80, 5, '온 힘을 다해 들이받는다.'),
-  splash: m('튀어오르기', 'normal', 0, 0, 40, '팔딱팔딱 튀어오른다. 아무 일도 일어나지 않는다.', { splash: true, signature: true }),
-  transform: m('변신', 'normal', 0, 0, 10, '상대의 모습으로 변신해 능력과 기술을 그대로 따라 한다.', { transform: true, signature: true }),
+  splash: m('튀어오르기', 'normal', 0, 0, 40, '팔딱팔딱 튀어오를 뿐, 아무 일도 없다.', { splash: true, signature: true }),
+  transform: m('변신', 'normal', 0, 0, 10, '상대로 변신해 능력과 기술을 따라 한다.', { transform: true, signature: true }),
   // 불꽃
   ember: m('불씨', 'fire', 40, 100, 25, '작은 불꽃. 화상을 입힐 때가 있다.', { status: 'brn', chance: 10 }),
   flamewheel: m('불수레', 'fire', 60, 100, 25, '불꽃을 두르고 구른다.', { status: 'brn', chance: 10 }),
@@ -75,7 +75,7 @@ export const MOVES = {
   inferno: m('작열', 'fire', 120, 85, 5, '모든 것을 태우는 불꽃.', { status: 'brn', chance: 30 }),
   // 물
   watershot: m('물방울쏘기', 'water', 40, 100, 25, '물방울을 세차게 쏜다.'),
-  bubble: m('거품방울', 'water', 20, 100, 30, '거품을 뿜는다. 스피드를 떨어뜨릴 때가 있다.', { stat: [{ s: 'spe', n: -1 }], chance: 10 }),
+  bubble: m('거품방울', 'water', 20, 100, 30, '거품을 뿜는다. 스피드를 낮출 때도.', { stat: [{ s: 'spe', n: -1 }], chance: 10 }),
   wavecrash: m('물결치기', 'water', 65, 100, 20, '물결로 친다.', { stat: [{ s: 'spe', n: -1 }], chance: 10 }),
   tsunami: m('해일', 'water', 95, 100, 15, '거대한 파도로 덮친다.'),
   geyser: m('물기둥', 'water', 120, 80, 5, '강력한 물기둥을 뿜어낸다.'),
@@ -120,10 +120,10 @@ export const MOVES = {
   peck: m('콕찌르기', 'flying', 35, 100, 35, '부리로 콕 찌른다.'),
   gust: m('돌풍', 'flying', 40, 100, 35, '날개로 돌풍을 일으킨다.'),
   wingbeat: m('날갯짓', 'flying', 60, 100, 35, '날개로 세게 친다.'),
-  dive: m('급강하', 'flying', 80, 95, 15, '높은 곳에서 내리꽂는다. 급소에 맞기 쉽다.', { highCrit: true }),
+  dive: m('급강하', 'flying', 80, 95, 15, '높이서 내리꽂는다. 급소에 맞기 쉽다.', { highCrit: true }),
   // 에스퍼
   psywave: m('염력파', 'psychic', 50, 100, 25, '염력을 보낸다. 혼란시킬 때가 있다.', { confuse: true, chance: 10 }),
-  mindblast: m('정신파', 'psychic', 90, 100, 10, '강한 염력. 특수방어를 떨어뜨릴 때가 있다.', { stat: [{ s: 'spd', n: -1 }], chance: 10 }),
+  mindblast: m('정신파', 'psychic', 90, 100, 10, '강한 염력. 특수방어를 낮출 때가 있다.', { stat: [{ s: 'spd', n: -1 }], chance: 10 }),
   hypno: m('졸음파', 'psychic', 0, 60, 20, '이상한 파동으로 잠재운다.', { status: 'slp' }),
   calm: m('집중', 'psychic', 0, 0, 20, '자신의 특수공격과 특수방어를 올린다.', {
     stat: [{ s: 'spa', n: 1, self: true }, { s: 'spd', n: 1, self: true }],
@@ -152,7 +152,7 @@ export const MOVES = {
   dragonwave: m('천룡파', 'dragon', 100, 100, 10, '용의 기운을 파동으로 쏜다.'),
   // 악
   glare: m('흘겨보기', 'dark', 0, 100, 30, '상대의 방어를 떨어뜨린다.', { stat: [{ s: 'def', n: -1 }] }),
-  bite: m('깨물기', 'dark', 60, 100, 25, '날카로운 이빨로 문다. 풀죽게 할 때가 있다.', { flinch: true, chance: 30 }),
+  bite: m('깨물기', 'dark', 60, 100, 25, '날카롭게 문다. 풀죽게 할 때가 있다.', { flinch: true, chance: 30 }),
   feint: m('기습할퀴기', 'dark', 60, 0, 20, '방심한 틈을 노려 반드시 맞는다.'),
   crunch: m('으깨물기', 'dark', 80, 100, 15, '세게 깨문다.', { stat: [{ s: 'spd', n: -1 }], chance: 20 }),
   // 강철

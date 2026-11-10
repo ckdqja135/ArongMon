@@ -101,6 +101,59 @@ function quantize(img: Img, n: number) {
   }
 }
 
+const lum = (d: Float32Array, o: number) => d[o] * 0.3 + d[o + 1] * 0.59 + d[o + 2] * 0.11;
+
+/** 원본에서 밝기가 크게 바뀌는 곳(무늬·마디·눈매)을 찾아, 줄인 그림의 칸마다 그런 곳이 얼마나 섞였는지 */
+function edgeFraction(src: Img, tw: number, th: number, threshold: number): Float32Array {
+  const { w, h, data } = src;
+  const L = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) L[i] = data[i * 4 + 3] > 128 ? lum(data, i * 4) : -1;
+  const out = new Float32Array(tw * th);
+  const sx = w / tw, sy = h / th;
+  for (let ty = 0; ty < th; ty++)
+    for (let tx = 0; tx < tw; tx++) {
+      let hit = 0, n = 0;
+      for (let y = Math.max(1, Math.floor(ty * sy)); y < Math.min(h - 1, Math.ceil((ty + 1) * sy)); y++)
+        for (let x = Math.max(1, Math.floor(tx * sx)); x < Math.min(w - 1, Math.ceil((tx + 1) * sx)); x++) {
+          const at = (xx: number, yy: number) => L[yy * w + xx];
+          if (at(x, y) < 0) continue;
+          // 투명한 이웃은 가운데 밝기로 본다 (바깥 테두리는 따로 외곽선을 그린다)
+          const v = (xx: number, yy: number) => (at(xx, yy) < 0 ? at(x, y) : at(xx, yy));
+          const gx = v(x + 1, y - 1) + 2 * v(x + 1, y) + v(x + 1, y + 1) - v(x - 1, y - 1) - 2 * v(x - 1, y) - v(x - 1, y + 1);
+          const gy = v(x - 1, y + 1) + 2 * v(x, y + 1) + v(x + 1, y + 1) - v(x - 1, y - 1) - 2 * v(x, y - 1) - v(x + 1, y - 1);
+          if (Math.hypot(gx, gy) / 4 > threshold) hit++;
+          n++;
+        }
+      out[ty * tw + tx] = n ? hit / n : 0;
+    }
+  return out;
+}
+
+/** 채도와 대비를 조금 올려 도트답게 */
+function vivid(img: Img, sat: number, contrast: number) {
+  const d = img.data;
+  for (let o = 0; o < d.length; o += 4) {
+    if (d[o + 3] < 1) continue;
+    const l = lum(d, o);
+    for (let c = 0; c < 3; c++) d[o + c] = Math.max(0, Math.min(255, (l + (d[o + c] - l) * sat - 128) * contrast + 128));
+  }
+}
+
+/** 안쪽 선: 밝기가 크게 바뀌는 칸 중 주변보다 어두운 쪽을 진하게 */
+function innerLines(img: Img, frac: Float32Array, minFrac: number) {
+  const { w, h, data } = img;
+  const solid = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && data[(y * w + x) * 4 + 3] > 0;
+  const marks: number[] = [];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (!solid(x, y) || frac[y * w + x] < minFrac) continue;
+      let sum = 0, n = 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (solid(x + dx, y + dy)) { sum += lum(data, ((y + dy) * w + x + dx) * 4); n++; }
+      if (n && lum(data, (y * w + x) * 4) <= sum / n + 2) marks.push((y * w + x) * 4);
+    }
+  for (const o of marks) for (let c = 0; c < 3; c++) data[o + c] *= 0.55;
+}
+
 /** 투명한 곳과 닿은 가장자리를 진하게 칠해 도트 외곽선을 만든다 */
 function outline(img: Img) {
   const { w, h, data } = img;
@@ -112,18 +165,25 @@ function outline(img: Img) {
   for (const o of edge) for (let c = 0; c < 3; c++) data[o + c] = data[o + c] * 0.28 + 16 * 0.72;
 }
 
-function pixelize(src: Img, size: number, colors: number): Img {
-  const s = size / Math.max(src.w, src.h);
-  const img = shrink(src, Math.max(1, Math.round(src.w * s)), Math.max(1, Math.round(src.h * s)));
+/** size는 가로·세로 평균의 목표 길이 (팔을 벌린 꼬마돌처럼 납작한 그림도 몸이 작아지지 않게), cap은 칸 크기 */
+const TUNE = { edge: Number(process.env.EDGE ?? 16), frac: Number(process.env.FRAC ?? 0.15), sat: Number(process.env.SAT ?? 1.15), contrast: Number(process.env.CONTRAST ?? 1.08) };
+
+function pixelize(src: Img, size: number, cap: number, colors: number): Img {
+  const s = Math.min(size / ((src.w + src.h) / 2), cap / Math.max(src.w, src.h));
+  const tw = Math.max(1, Math.round(src.w * s)), th = Math.max(1, Math.round(src.h * s));
+  const img = shrink(src, tw, th);
+  vivid(img, TUNE.sat, TUNE.contrast);
   const sharp = sharpen(img, size >= 40 ? 0.45 : 0.25);
   quantize(sharp, colors);
+  // 작은 그림(아이콘·필드)은 안쪽 선을 넣으면 뭉개지므로 큰 그림에만
+  if (size >= 40) innerLines(sharp, edgeFraction(src, tw, th, TUNE.edge), TUNE.frac);
   outline(sharp);
   return sharp;
 }
 
 const save = (img: Img, path: string) => writeFileSync(path, encodePng(img.w, img.h, Uint8ClampedArray.from(img.data)));
 
-/** 배틀 그림 크기: 키에 따라 48~78px (아롱이 45~70px와 어울리게) */
+/** 배틀 그림 크기 (가로·세로 평균): 키에 따라 46~78px (아롱이 45~70px와 어울리게) */
 export const frontSize = (height: number) => Math.round(Math.min(78, Math.max(46, 40 + 16 * Math.sqrt(height))));
 /** 필드에서 따라다닐 때 크기 (monOverrides.fieldBox와 같다) */
 const fieldSize = (height: number) => Math.round(Math.min(24, Math.max(11, 10 + height * 8)));
@@ -136,14 +196,14 @@ for (const sp of Object.values(SPECIES)) {
   const dir = `src/assets/mon/${sp.key}`;
   mkdirSync(dir, { recursive: true });
   const normal = crop(load(`${srcDir}/${sp.no}.png`));
-  save(pixelize(normal, frontSize(sp.height), 24), `${dir}/front.png`);
-  save(pixelize(normal, 28, 16), `${dir}/icon.png`);
-  save(pixelize(normal, fieldSize(sp.height), 10), `${dir}/field.png`);
+  save(pixelize(normal, frontSize(sp.height), 78, 16), `${dir}/front.png`);
+  save(pixelize(normal, 26, 30, 16), `${dir}/icon.png`);
+  save(pixelize(normal, fieldSize(sp.height), 24, 10), `${dir}/field.png`);
   const shinyPath = `${srcDir}/shiny/${sp.no}.png`;
   if (existsSync(shinyPath)) {
     const shiny = crop(load(shinyPath));
-    save(pixelize(shiny, frontSize(sp.height), 24), `${dir}/front-shiny.png`);
-    save(pixelize(shiny, 28, 16), `${dir}/icon-shiny.png`);
+    save(pixelize(shiny, frontSize(sp.height), 78, 16), `${dir}/front-shiny.png`);
+    save(pixelize(shiny, 26, 30, 16), `${dir}/icon-shiny.png`);
   }
   console.log(sp.key);
 }

@@ -5,7 +5,7 @@ import { sfx } from '../engine/sound';
 import { chance, pick, randInt } from '../engine/rng';
 import type { Dir } from '../gfx/charArt';
 import {
-  CHAR_SIZE, SCREEN_H, SCREEN_W, TILE, bikeCanvas, charCanvas, exclaimCanvas, grassOverlay, heartCanvas, monFieldCanvas, groundBallCanvas, shadowCanvas, tileCanvas, tubeCanvas,
+  CHAR_SIZE, SCREEN_H, SCREEN_W, TILE, arongRiderCanvas, bikeCanvas, charCanvas, exclaimCanvas, grassOverlay, heartCanvas, monFieldCanvas, groundBallCanvas, shadowCanvas, tileCanvas, tubeCanvas,
 } from '../gfx/sprites';
 import { hasFieldArt } from '../gfx/arongField';
 import { TILES, tileVariant, type TileDef } from '../gfx/tileArt';
@@ -64,6 +64,8 @@ export interface WorldHooks {
   talkFollower(): void;
   /** 자전거를 타고 있는지 */
   riding(): boolean;
+  /** 자전거 뒷자리에 태울 몬스터 (파티의 아롱이). 없으면 null */
+  bikeBuddy(): string | null;
   /** 물을 마주 보고 A를 눌렀을 때 (파도타기) */
   water(dir: Dir): void;
   select(): void;
@@ -166,7 +168,8 @@ export class World {
 
   followerAt(x: number, y: number) {
     const f = this.follower;
-    if (!f || f.hidden || !this.hooks.followerSpecies()) return false;
+    // 자전거를 탈 때는 볼에 들어가 있다
+    if (!f || f.hidden || this.hooks.riding() || !this.hooks.followerSpecies()) return false;
     return (f.x === x && f.y === y) || (f.moving && f.fromX === x && f.fromY === y);
   }
 
@@ -219,12 +222,20 @@ export class World {
     return this.npcs.find((n) => !n.hidden && ((n.x === x && n.y === y) || (n.moving && n.fromX === x && n.fromY === y)));
   }
 
+  /** 플레이어가 지나갈 수 없는 사람: 이야기 때문에 길을 막는 사람(조건이 되면 사라진다), 몬스터, 떨어진 도구, 아직 이기지 않은 트레이너.
+   *  그 밖의 마을 사람과 이긴 트레이너는 지나갈 수 있다 */
+  private solidNpc(n: NpcRt) {
+    const d = n.def;
+    if (d.hideIf || d.sprite === 'item' || 'mon' in d.sprite) return true;
+    return !!d.trainer && !this.hooks.flag(`beat_${d.trainer.id}`);
+  }
+
   private blocked(x: number, y: number, self?: Actor): boolean {
     if (!this.inBounds(x, y) && !this.neighbor(x, y)) return true;
     const t = this.tile(x, y);
     if (t.solid && !(t.water && self === this.player && this.surfing)) return true;
     const n = this.npcAt(x, y);
-    if (n && n !== self) return true;
+    if (n && n !== self && (self !== this.player || this.solidNpc(n))) return true;
     const p = this.player;
     if (self !== p && ((p.x === x && p.y === y) || (p.moving && p.fromX === x && p.fromY === y))) return true;
     if (self !== p && self !== this.follower && this.followerAt(x, y)) return true;
@@ -624,7 +635,7 @@ export class World {
     const fSpecies = this.hooks.followerSpecies();
     const f = this.follower;
     const list: { a: Actor; npc?: NpcRt; mon?: string }[] = [...this.npcs.filter((n) => !n.hidden).map((n) => ({ a: n, npc: n })), { a: p }];
-    if (f && !f.hidden && fSpecies) list.push({ a: f, mon: fSpecies });
+    if (f && !f.hidden && fSpecies && !this.hooks.riding()) list.push({ a: f, mon: fSpecies });
     list.sort((u, v) => u.a.py - v.a.py || (u.a === p ? 1 : v.a === p ? -1 : 0));
     for (const { a, npc, mon } of list) {
       const sx = Math.round(a.px) - camX;
@@ -659,9 +670,28 @@ export class World {
         // 자전거: 몸을 조금 올리고 자전거를 겹쳐 그린다 (뒷모습일 땐 자전거가 몸 뒤)
         const bike = bikeCanvas(a.dir);
         const by = sy + TILE - bike.height + 1;
+        const bodyY = sy - (CHAR_SIZE.h - TILE) - 4;
+        // 헬멧 쓴 아롱이가 뒷바퀴 위 바구니에 탄다: 옆모습이면 등 뒤, 뒷모습이면 몸 앞(화면 쪽), 앞모습이면 몸에 가려진다
+        const buddy = this.hooks.bikeBuddy();
+        const rider = buddy && hasFieldArt(buddy) ? arongRiderCanvas(buddy, a.dir) : null;
+        const rw = rider?.width ?? 0, rh = rider?.height ?? 0;
+        const side = a.dir === 'left' || a.dir === 'right';
+        const rx = a.dir === 'left' ? sx + 8 : a.dir === 'right' ? sx + 8 - rw : sx + Math.round((TILE - rw) / 2);
+        const ry = by + (side ? 6 : 8) - rh;
         if (a.dir === 'up') ctx.drawImage(bike, sx, by);
-        ctx.drawImage(charCanvas(sprite.base, sprite.pal, a.dir, 0), sx, sy - (CHAR_SIZE.h - TILE) - 4);
+        if (rider && a.dir !== 'up') {
+          if (side) {
+            // 바구니를 받치는 짐받이: 바구니 밑에서 뒷바퀴 축까지
+            const hub = sx + (a.dir === 'left' ? 12 : 3);
+            ctx.fillStyle = '#2c2c3a';
+            ctx.fillRect(Math.min(hub, rx + rw / 2), by + 5, Math.abs(rx + rw / 2 - hub) + 1, 1);
+            ctx.fillRect(hub, by + 5, 1, 2);
+          }
+          ctx.drawImage(rider, rx, ry);
+        }
+        ctx.drawImage(charCanvas(sprite.base, sprite.pal, a.dir, 0), sx, bodyY);
         if (a.dir !== 'up') ctx.drawImage(bike, sx, by);
+        if (rider && a.dir === 'up') ctx.drawImage(rider, rx, ry);
       } else {
         ctx.drawImage(charCanvas(sprite.base, sprite.pal, a.dir, walkFrame), sx, sy - (CHAR_SIZE.h - TILE));
       }

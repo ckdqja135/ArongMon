@@ -81,18 +81,16 @@ const TREE = A(`
 ....77756677....
 ................`, 'tree');
 
-/** 이웃 나무: 1 위, 2 아래, 4 왼쪽, 8 오른쪽. 숲이 이어지면 틈을 그늘로 메운다 */
+/** 이웃 나무: 1 위, 2 아래, 4 왼쪽, 8 오른쪽.
+ *  나무 사이 틈은 땅(풀)이 보이고, 위아래로 이어진 나무는 DP처럼 겹친다:
+ *  위에 나무가 있으면 4줄 올려 그리고, 아래에 나무가 있으면 아래 나무 우듬지의 윗부분이 이 칸의 줄기를 가린다 */
 export function treeGrid(n: number): Grid {
-  const up = n & 1, down = n & 2, left = n & 4, right = n & 8;
-  return TREE.map((r, y) =>
-    r.map((c, x) => {
-      if (down && y >= 12) return y === 12 && x >= 4 && x <= 11 ? 8 : 4;
-      if (c >= 0) return c;
-      const top = y < 8;
-      const side = x < 8 ? left : right;
-      if (top && (up || side)) return 4;
-      if (!top && down) return 4;
-      return -1;
+  const up = n & 1, down = n & 2;
+  const shift = up ? 4 : 0;
+  return Array.from({ length: 16 }, (_, y) =>
+    Array.from({ length: 16 }, (_, x) => {
+      const below = down ? (TREE[y - 12]?.[x] ?? -1) : -1;
+      return below >= 0 ? below : (TREE[y + shift]?.[x] ?? -1);
     }),
   );
 }
