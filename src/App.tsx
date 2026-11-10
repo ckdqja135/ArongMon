@@ -69,7 +69,7 @@ export function App() {
           <Pad b="a" label="A" className="btn-a" />
         </div>
       </div>
-      <div className="keys">방향키 이동 · Z/Space = A · X/Esc = B · Enter = START</div>
+      <div className="keys">방향키 이동 · Z/Space = A · X/Esc = B · Enter = START · Shift = SELECT</div>
     </div>
   );
 }
