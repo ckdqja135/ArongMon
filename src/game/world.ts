@@ -107,6 +107,8 @@ export class World {
   surfing = false;
   /** 얼음 위를 미끄러지는 중 (방향키가 듣지 않는다) */
   private sliding = false;
+  /** 사람을 지나갈 수 있는 곳인지: 도로·숲·호수·동굴 (마을과 건물 안은 안 된다) */
+  private passThrough = false;
   /** 낚싯줄을 드리운 중. bite면 찌가 물속으로 끌려 들어간다 */
   fishing: { bite: boolean } | null = null;
   private lastBump = 0;
@@ -119,6 +121,9 @@ export class World {
   // ── 맵 ──
   load(mapId: string, x: number, y: number, dir: Dir, viaWarp = true) {
     this.map = MAPS[mapId];
+    const town = !!this.map.healSpot || /(마을|시티|도시)$/.test(this.map.name);
+    const cave = !this.map.outdoor && this.map.tiles.some((r) => r.includes(';'));
+    this.passThrough = (!!this.map.outdoor && !town) || cave;
     if (viaWarp && !TILES[this.map.tiles[y]?.[x]]?.water) this.surfing = false;
     this.player = makeActor(x, y, dir);
     this.npcs = this.map.npcs.map((def) => ({
@@ -222,10 +227,11 @@ export class World {
     return this.npcs.find((n) => !n.hidden && ((n.x === x && n.y === y) || (n.moving && n.fromX === x && n.fromY === y)));
   }
 
-  /** 플레이어가 지나갈 수 없는 사람: 이야기 때문에 길을 막는 사람(조건이 되면 사라진다), 몬스터, 떨어진 도구, 아직 이기지 않은 트레이너.
-   *  그 밖의 마을 사람과 이긴 트레이너는 지나갈 수 있다 */
+  /** 플레이어가 지나갈 수 없는 사람: 마을·건물 안의 모든 사람, 이야기 때문에 길을 막는 사람(조건이 되면 사라진다), 몬스터, 떨어진 도구, 아직 이기지 않은 트레이너.
+   *  도로·숲·동굴에 서 있는 그 밖의 사람과 이긴 트레이너는 지나갈 수 있다 */
   private solidNpc(n: NpcRt) {
     const d = n.def;
+    if (!this.passThrough) return true;
     if (d.hideIf || d.sprite === 'item' || 'mon' in d.sprite) return true;
     return !!d.trainer && !this.hooks.flag(`beat_${d.trainer.id}`);
   }
