@@ -235,7 +235,11 @@ function ActionMenu({ mon, moves, trainer, foe, resolve }: { mon: Mon; moves: Mo
             columns={2}
             visible={2}
             items={moves.map((s) => ({
-              label: <span className={`${s.pp <= 0 ? 'nopp' : ''}${MOVES[s.id].name.length >= 6 ? ' long' : ''}`}>{MOVES[s.id].name}</span>,
+              label: (
+                <span className={`${s.pp <= 0 ? 'nopp' : ''}${MOVES[s.id].name.length >= 5 ? ' long' : ''}${MOVES[s.id].name.length >= 6 ? ' xlong' : ''}`}>
+                  {MOVES[s.id].name}
+                </span>
+              ),
             }))}
             onMove={setCur}
             onSelect={(k) => (moves[k].pp <= 0 ? setWarn('기술의 남은 포인트가 없다!') : resolve({ kind: 'fight', move: k }))}
