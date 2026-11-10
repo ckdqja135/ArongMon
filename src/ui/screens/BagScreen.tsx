@@ -12,7 +12,8 @@ import { openParty } from './PartyScreen';
 export type BagResult = { item: ItemId; target?: number } | null;
 type BagMode = 'field' | 'battle';
 
-export const openBag = (mode: BagMode) => openOverlay<BagResult>((done) => <BagScreen mode={mode} onDone={done} />);
+/** noBalls: 트레이너와의 배틀 (남의 몬스터에게는 볼을 던질 수 없다) */
+export const openBag = (mode: BagMode, noBalls = false) => openOverlay<BagResult>((done) => <BagScreen mode={mode} noBalls={noBalls} onDone={done} />);
 
 const POCKETS: { id: Pocket; name: string }[] = [
   { id: 'items', name: '도구' },
@@ -20,7 +21,7 @@ const POCKETS: { id: Pocket; name: string }[] = [
   { id: 'key', name: '중요한 물건' },
 ];
 
-function BagScreen({ mode, onDone }: { mode: BagMode; onDone: (r: BagResult) => void }) {
+function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean; onDone: (r: BagResult) => void }) {
   const [pocket, setPocket] = useState(0);
   const [cur, setCur] = useState(0);
   const [sub, setSub] = useState<ItemId | null>(null);
@@ -62,7 +63,10 @@ function BagScreen({ mode, onDone }: { mode: BagMode; onDone: (r: BagResult) => 
     const it = ITEMS[id];
     setSub(null);
     if (mode === 'battle') {
-      if ('ball' in it) onDone({ item: id });
+      if ('ball' in it) {
+        if (noBalls) setMsg('남의 몬스터에게는\n볼을 던질 수 없다!');
+        else onDone({ item: id });
+      }
       else if (it.pocket === 'items') await useOnMon(id);
       else setMsg('지금은 쓸 수 없다.');
       return;

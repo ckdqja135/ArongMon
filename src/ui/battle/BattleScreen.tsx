@@ -34,7 +34,7 @@ export function BattleScreen({ session }: { session: BattleSession }) {
       {player.visible && player.mon && <PlayerHud side={player} />}
       <div className="battle-bottom">
         {s.prompt ? (
-          <ActionMenu key={s.prompt.mon.uid + s.tick} mon={s.prompt.mon} moves={s.prompt.moves} resolve={s.prompt.resolve} />
+          <ActionMenu key={s.prompt.mon.uid + s.tick} mon={s.prompt.mon} moves={s.prompt.moves} trainer={s.kind === 'trainer'} resolve={s.prompt.resolve} />
         ) : s.message ? (
           <TextBox key={s.message.key} text={s.message.text} onDone={() => session.messageDone()} auto={1000} width={232} className="textbox battle-text" />
         ) : (
@@ -183,7 +183,7 @@ function PartyBalls({ party, className }: { party: Mon[]; className: string }) {
   );
 }
 
-function ActionMenu({ mon, moves, resolve }: { mon: Mon; moves: MoveSlot[]; resolve: (a: PlayerAction) => void }) {
+function ActionMenu({ mon, moves, trainer, resolve }: { mon: Mon; moves: MoveSlot[]; trainer: boolean; resolve: (a: PlayerAction) => void }) {
   const [mode, setMode] = useState<'main' | 'moves'>('main');
   const [busy, setBusy] = useState(false);
   const [cur, setCur] = useState(0);
@@ -195,7 +195,7 @@ function ActionMenu({ mon, moves, resolve }: { mon: Mon; moves: MoveSlot[]; reso
       else setMode('moves');
     } else if (k === 1) {
       setBusy(true);
-      const r = await openBag('battle');
+      const r = await openBag('battle', trainer);
       setBusy(false);
       if (r) resolve({ kind: 'item', item: r.item, target: r.target });
     } else if (k === 2) {
@@ -246,7 +246,7 @@ function ActionMenu({ mon, moves, resolve }: { mon: Mon; moves: MoveSlot[]; reso
         <div className="line">무엇을 할까?</div>
       </div>
       <Frame className="action-menu">
-        <Menu columns={2} items={['싸운다', '가방', '몬스터', '도망간다']} onSelect={onMain} active={!busy} />
+        <Menu columns={2} items={['싸운다', '가방', '포켓몬', '도망간다']} onSelect={onMain} active={!busy} />
       </Frame>
     </div>
   );

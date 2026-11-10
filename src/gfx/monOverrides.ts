@@ -1,7 +1,7 @@
-// src/assets/mon/<종족키>/ 의 그림 파일을 쓴다.
-// - front.png (+ icon.png): 직접 그린 도트 그림 (아롱이). 시작할 때 모두 불러 둔다.
-// - hd.png (+ hd-shiny.png): 1세대 151종의 고해상도 그림. 처음 쓸 때 불러온다.
-// 크기가 달라도 칸에 맞게 줄이고, 단색 배경은 투명하게 지운다.
+// src/assets/mon/<종족키>/ 의 도트 그림을 쓴다. 종족마다 처음 쓸 때 한꺼번에 불러온다.
+// front.png (배틀·도감, 필수), icon.png (메뉴 아이콘), field.png (필드에서 따라다닐 때), front-shiny.png·icon-shiny.png (이로치)
+// 아롱이는 직접 그린 그림, 1세대 151종은 scripts/pixelize-mon.ts로 HOME 그림을 도트로 다시 찍은 것.
+// 크기가 칸보다 크면 줄이고, 단색 배경은 투명하게 지운다.
 import { SPECIES } from '../data/species';
 
 const files = import.meta.glob('../assets/mon/*/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
@@ -14,12 +14,10 @@ for (const [path, url] of Object.entries(files)) {
 
 export type OverrideView = 'front' | 'icon' | 'field';
 const BOX: Record<OverrideView, number> = { front: 80, icon: 32, field: 24 };
-/** 고해상도 그림은 화면 1px에 이만큼의 픽셀을 담는다 (canvas.dataset.scale) */
-export const HD_RES = 4;
 
 /** 필드에서 따라다닐 때 크기: 실제 키에 비례 (아롱이 12px, 사람 키쯤 되면 24px) */
 export const fieldBox = (species: string) => Math.round(Math.min(BOX.field, Math.max(11, 10 + (SPECIES[species]?.height ?? 1) * 8)));
-/** `${종족}:${view}` (이로치 고해상도 그림은 `:shiny`가 붙는다) → 준비된 그림 */
+/** `${종족}:${view}` (이로치 그림은 `:shiny`가 붙는다) → 준비된 그림 */
 const prepared = new Map<string, HTMLCanvasElement>();
 const loading = new Map<string, Promise<void>>();
 
@@ -55,8 +53,8 @@ function clearBackground(d: ImageData) {
 }
 
 /** 그림 부분만 잘라 box×box 칸에 바닥 가운데 정렬로 넣는다 */
-/** res > 1이면 고해상도: box×res 칸에 부드럽게 줄여 넣고, 화면에서는 box 크기로 보인다 */
-function fit(img: HTMLImageElement, box: number, res = 1): HTMLCanvasElement {
+/** 그림 부분만 잘라 box×box 칸에 바닥 가운데 정렬로 넣는다 */
+function fit(img: HTMLImageElement, box: number): HTMLCanvasElement {
   const src = document.createElement('canvas');
   src.width = img.naturalWidth;
   src.height = img.naturalHeight;
@@ -75,20 +73,18 @@ function fit(img: HTMLImageElement, box: number, res = 1): HTMLCanvasElement {
         x1 = Math.max(x1, x);
         y1 = Math.max(y1, y);
       }
-  const size = box * res;
   const out = document.createElement('canvas');
-  out.width = out.height = size;
-  if (res > 1) out.dataset.scale = String(res);
+  out.width = out.height = box;
   if (x1 < 0) return out;
   const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
-  const s = Math.min(1, size / cw, size / ch);
+  const s = Math.min(1, box / cw, box / ch);
   const dw = Math.max(1, Math.round(cw * s)), dh = Math.max(1, Math.round(ch * s));
   const octx = out.getContext('2d', { willReadFrequently: true })!;
-  // 고해상도는 늘 부드럽게. 도트 그림은 2배 넘게 줄일 때만 부드럽게 줄인 뒤 반투명 가장자리를 정리해 픽셀 느낌을 살린다
-  octx.imageSmoothingEnabled = res > 1 || s < 0.5;
+  // 2배 넘게 줄일 때는 부드럽게 줄인 뒤 반투명 가장자리를 정리해 픽셀 느낌을 살린다
+  octx.imageSmoothingEnabled = s < 0.5;
   octx.imageSmoothingQuality = 'high';
-  octx.drawImage(src, x0, y0, cw, ch, Math.floor((size - dw) / 2), size - dh, dw, dh);
-  if (res === 1 && s < 0.5) {
+  octx.drawImage(src, x0, y0, cw, ch, Math.floor((box - dw) / 2), box - dh, dw, dh);
+  if (s < 0.5) {
     const od = octx.getImageData(0, 0, box, box);
     for (let i = 3; i < od.data.length; i += 4) od.data[i] = od.data[i] < 110 ? 0 : 255;
     octx.putImageData(od, 0, 0);
@@ -96,54 +92,32 @@ function fit(img: HTMLImageElement, box: number, res = 1): HTMLCanvasElement {
   return out;
 }
 
-/** 시작할 때: 직접 그린 도트 그림만 불러 둔다 */
-export async function loadMonOverrides() {
-  const raw = new Map<string, HTMLImageElement>();
-  await Promise.all(
-    [...urls].map(async ([key, url]) => {
-      if (!key.endsWith(':front') && !key.endsWith(':icon')) return;
-      const img = await loadImage(url);
-      if (img) raw.set(key, img);
-    }),
-  );
-  for (const [key, img] of raw) {
-    const [species, kind] = key.split(':');
-    if (kind === 'front') {
-      prepared.set(`${species}:front`, fit(img, BOX.front));
-      if (!raw.has(`${species}:icon`)) prepared.set(`${species}:icon`, fit(img, BOX.icon));
-      prepared.set(`${species}:field`, fit(raw.get(`${species}:icon`) ?? img, fieldBox(species)));
-    } else {
-      prepared.set(`${species}:icon`, fit(img, BOX.icon));
-    }
-  }
-}
+/** 시작할 때: 처음부터 나오는 아롱이 그림만 미리 불러 둔다 */
+export const loadMonOverrides = () => Promise.all(['arong', 'arong2', 'arong3'].map((k) => loadMonArt(k)));
 
-/** 고해상도 그림이 있는데 아직 안 불러왔는지 (이로치면 이로치 그림 기준) */
-export function hdPending(species: string, shiny = false) {
-  if (!urls.has(`${species}:hd`)) return false;
-  const k = shiny && urls.has(`${species}:hd-shiny`) ? `${species}:front:shiny` : `${species}:front`;
-  return !prepared.has(k);
-}
+/** 그림 파일이 있는데 아직 안 불러왔는지 */
+export const artPending = (species: string) => urls.has(`${species}:front`) && !prepared.has(`${species}:front`);
 
-/** 고해상도 그림을 불러와 배틀·아이콘·필드용으로 만들어 둔다 */
-export function loadMonArt(species: string, shiny = false): Promise<void> {
-  const file = shiny && urls.has(`${species}:hd-shiny`) ? 'hd-shiny' : 'hd';
-  const key = `${species}:${file}`;
-  let p = loading.get(key);
+/** 이 종족의 그림 파일을 모두 불러와 배틀·아이콘·필드용으로 만들어 둔다 */
+export function loadMonArt(species: string): Promise<void> {
+  let p = loading.get(species);
   if (!p) {
     p = (async () => {
-      const url = urls.get(key);
-      const img = url ? await loadImage(url) : null;
-      if (!img) return;
-      const tag = file === 'hd-shiny' ? ':shiny' : '';
-      prepared.set(`${species}:front${tag}`, fit(img, BOX.front, HD_RES));
-      prepared.set(`${species}:icon${tag}`, fit(img, BOX.icon, HD_RES));
-      if (!tag) prepared.set(`${species}:field`, fit(img, fieldBox(species)));
+      const names = ['front', 'icon', 'field', 'front-shiny', 'icon-shiny'];
+      const imgs = await Promise.all(names.map((n) => (urls.has(`${species}:${n}`) ? loadImage(urls.get(`${species}:${n}`)!) : null)));
+      const [front, icon, field, frontShiny, iconShiny] = imgs;
+      if (!front) return;
+      prepared.set(`${species}:icon`, fit(icon ?? front, BOX.icon));
+      prepared.set(`${species}:field`, fit(field ?? icon ?? front, fieldBox(species)));
+      if (frontShiny) prepared.set(`${species}:front:shiny`, fit(frontShiny, BOX.front));
+      if (iconShiny) prepared.set(`${species}:icon:shiny`, fit(iconShiny, BOX.icon));
+      // 앞모습을 마지막에 넣는다 (artPending이 false가 되면 다른 그림도 준비된 것)
+      prepared.set(`${species}:front`, fit(front, BOX.front));
     })();
-    loading.set(key, p);
+    loading.set(species, p);
   }
   return p;
 }
 
-/** 준비된 그림. shiny면 이로치 고해상도 그림이 있을 때만 돌려준다 */
+/** 준비된 그림. shiny면 이로치 그림이 따로 있을 때만 돌려준다 */
 export const monOverride = (species: string, view: OverrideView, shiny = false) => prepared.get(`${species}:${view}${shiny ? ':shiny' : ''}`);

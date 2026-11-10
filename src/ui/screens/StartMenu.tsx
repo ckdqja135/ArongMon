@@ -20,7 +20,7 @@ export async function openStartMenu() {
   for (;;) {
     const entries: Entry[] = [];
     if (G.flag('dex')) entries.push({ label: '도감', run: openDex });
-    if (G.save.party.length) entries.push({ label: '몬스터', run: () => openParty({ mode: 'field' }) });
+    if (G.save.party.length) entries.push({ label: '포켓몬', run: () => openParty({ mode: 'field' }) });
     entries.push({ label: '가방', run: () => openBag('field') });
     entries.push({ label: G.player, run: openCard });
     entries.push({ label: '리포트', run: report });
