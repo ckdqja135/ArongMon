@@ -36,7 +36,7 @@ async function buy(stock: ItemId[]) {
     await say('감사합니다!');
     if (id === 'capsule' && n >= 10) {
       G.addItem('supercapsule');
-      await say('많이 사 주셔서 슈퍼캡슐을\n하나 덤으로 드릴게요!');
+      await say('많이 사 주셔서 슈퍼볼을\n하나 덤으로 드릴게요!');
     }
   }
 }

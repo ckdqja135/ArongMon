@@ -252,7 +252,7 @@ const GEN1_LIST: Omit<SpeciesData, 'no'>[] = [
   G1('hypno', '슬리퍼', ['psychic'], b(85, 73, 70, 73, 115, 67), ['mediumFast', 165, 75, 0.5], LS.drowzee, ['최면', 1.6, 75.6], '손에 든 추를 흔들어 졸음을\n부른다. 추를 보다 보면 방금\n일도 깜빡 잊는다.'),
   G1('krabby', '크랩', ['water'], b(30, 105, 90, 25, 25, 50), ['mediumFast', 115, 225, 0.5], LS.krabby, ['갯가게', 0.4, 6.5], '모래사장에 구멍을 파고 산다.\n집게는 떨어져도 금세\n다시 자라난다.', lv('kingler', 28)),
   G1('kingler', '킹크랩', ['water'], b(55, 130, 115, 50, 50, 75), ['mediumFast', 206, 60, 0.5], LS.krabby, ['집게', 1.3, 60.0], '커다란 집게는 힘이 엄청나지만\n너무 무거워서 겨누는 데\n시간이 걸린다.'),
-  G1('voltorb', '찌리리공', ['electric'], b(40, 30, 50, 55, 55, 100), ['mediumFast', 103, 190, null], LS.voltorb, ['볼', 0.5, 10.4], '몬스터캡슐과 꼭 닮았다.\n모르고 건드리면 찌릿하고\n전기를 뿜는다.', lv('electrode', 30)),
+  G1('voltorb', '찌리리공', ['electric'], b(40, 30, 50, 55, 55, 100), ['mediumFast', 103, 190, null], LS.voltorb, ['볼', 0.5, 10.4], '몬스터볼과 꼭 닮았다.\n모르고 건드리면 찌릿하고\n전기를 뿜는다.', lv('electrode', 30)),
   G1('electrode', '붐볼', ['electric'], b(60, 50, 70, 80, 80, 140), ['mediumFast', 150, 60, null], LS.voltorb, ['볼', 1.2, 66.6], '전기를 잔뜩 모으면 몸이\n부풀어 바람에 떠다닌다.\n작은 자극에도 펑 터진다.'),
   G1('exeggcute', '아라리', ['grass', 'psychic'], b(60, 40, 80, 60, 45, 40), ['slow', 98, 90, 0.5], LS.exeggcute, ['알', 0.4, 2.5], '여섯이 모여 하나로 지낸다.\n서로 마음으로 이야기해서\n떨어져도 금세 다시 모인다.', stone('exeggutor', 'leafstone')),
   G1('exeggutor', '나시', ['grass', 'psychic'], b(95, 95, 85, 125, 65, 55), ['slow', 212, 45, 0.5], [...LS.exeggcute, [19, 'slam'], [31, 'mindblast'], [40, 'petalstorm']], ['야자열매', 2.0, 120.0], '머리마다 따로 생각을 한다.\n걸어 다니는 열대 나무라고\n불리기도 한다.'),

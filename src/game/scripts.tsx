@@ -1,5 +1,6 @@
 // 이야기 진행 스크립트. 지도 데이터의 script 이름으로 불린다.
 import { calcStats, createMon, monName, spec } from '../battle/mon';
+import type { RodId } from '../data/fishing';
 import { ITEMS, type ItemId } from '../data/items';
 import { exitOf } from '../data/maps';
 import { SPECIES } from '../data/species';
@@ -177,7 +178,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('나래: 비행 타입 몬스터의 진짜\n힘을 보여 줄게!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('pidgey', 8), createMon('spearow', 9), createMon('pidgeotto', 11)],
+      enemy: [createMon('pidgey', 7), createMon('spearow', 8), createMon('pidgeotto', 9)],
       trainer: { className: '관장', name: '나래', prize: 1100, sprite: { base: 'long', pal: 'purple' }, lose: '나래: 내 날개가... 꺾였어!' },
     });
     if (res.outcome !== 'win') return;
@@ -954,10 +955,10 @@ export const SCRIPTS: Record<string, Script> = {
     await say('진: 다 끝났구나. 아래층은\n네 친구가 정리해 줬다.');
     await say(`${RIVAL()}: 친구는 무슨. ...흥.\n그래도 이번엔 네가 해냈네.`);
     if (arong) await say(`진: ${josa(name, '이/가')} 스스로 장치를\n끊어 냈다고? 타입이 없는 게\n아니라, 무엇에도 물들지 않는 거였군.`);
-    await say('진: 이걸 받아라. 어떤 몬스터든\n반드시 잡을 수 있는 캡슐이다.');
+    await say('진: 이걸 받아라. 어떤 몬스터든\n반드시 잡을 수 있는 볼이다.');
     G.addItem('mastercapsule');
     sfx('item');
-    await say(`${josa(P(), '은/는')} 마스터캡슐을 받았다!`);
+    await say(`${josa(P(), '은/는')} 마스터볼을 받았다!`);
     await say('진: 마지막 배지는 내 고향 용의\n마을에 있다. 서리마을 동쪽 얼음\n동굴을 지나면 닿을 거다.');
     await say(`${RIVAL()}: 나도 간다. 리그에서\n누가 먼저 챔피언이 되나 보자!`);
     await w.fadeTo(1, 4);
@@ -1192,13 +1193,27 @@ export const SCRIPTS: Record<string, Script> = {
 
   async giftLady() {
     if (G.flag('giftLady')) {
-      await say('캡슐은 몬스터가 약해졌을 때\n던지면 잘 잡혀.');
+      await say('볼은 몬스터가 약해졌을 때\n던지면 잘 잡혀.');
       return;
     }
     await say('어머, 여행 중이구나?\n이걸 가져가렴.');
     G.addItem('supercapsule', 2);
     G.setFlag('giftLady');
     await say(`${josa(P(), '은/는')} ${ITEMS.supercapsule.name} 2개를\n받았다!`);
+  },
+
+  // ── 낚시꾼 ──
+  async oldRodFisher() {
+    await rodFisher('oldrod', ['낚시꾼: 연못에서 낚시하는 게\n내 유일한 낙이지.', '낚시꾼: 너도 해 볼래? 집에\n낡은 낚싯대가 하나 더 있거든.\n자, 받아!'],
+      '낚시꾼: 낡은낚싯대로는 거의\n잉어킹만 낚여. 그게 또 재밌지.');
+  },
+  async goodRodFisher() {
+    await rodFisher('goodrod', ['낚시꾼: 바다낚시는 처음이냐?\n바다엔 별별 몬스터가 다 있지.', '낚시꾼: 이 좋은낚싯대라면\n낡은 것보다 훨씬 센 녀석들이\n걸려든다고!'],
+      '낚시꾼: 바다에서 좋은낚싯대를\n쓰면 셀러나 쏘드라도 걸린다네.');
+  },
+  async superRodFisher() {
+    await rodFisher('superrod', ['낚시꾼: 용의 굴 물속에는 아주\n귀한 몬스터가 산다는 소문이\n있지.', '낚시꾼: 웬만한 낚싯대로는\n어림없어. 이 대단한낚싯대를\n가져가!'],
+      '낚시꾼: 대단한낚싯대로 용의 굴에서\n낚아 봐. 미뇽이 걸릴지도 몰라!');
   },
 };
 
@@ -1341,4 +1356,17 @@ async function rivalBattle() {
   G.healParty();
   await say('느티 박사: 1번도로를 따라 북쪽으로\n가면 이슬시티가 나온단다.');
   await say('느티 박사: 몬스터와 함께\n좋은 여행 하렴!');
+}
+
+/** 낚시꾼이 낚싯대를 준다. 이미 받았으면 낚시 이야기만 한다 */
+async function rodFisher(rod: RodId, give: string[], after: string) {
+  if (G.save.bag[rod]) {
+    await say(after);
+    return;
+  }
+  for (const t of give) await say(t);
+  G.addItem(rod);
+  sfx('item');
+  await say(`${josa(P(), '은/는')} ${josa(ITEMS[rod].name, '을/를')}\n받았다!`);
+  await say('낚시꾼: 물을 마주 보고 A 버튼을\n누르거나, 가방에서 꺼내 쓰면 돼.');
 }

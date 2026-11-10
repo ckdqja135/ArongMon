@@ -3,6 +3,7 @@ import { runBattle, type BattleOpts, type BattleResult } from '../battle/engine'
 import { learnMoves, pickMoves, type LearnIO } from '../battle/learn';
 import { createMon, healMon, maxHp, monName, movesLearnedAt, spec, type Mon } from '../battle/mon';
 import { BattleSession } from '../battle/session';
+import { FISH, RODS, ROD_BITE, type RodId } from '../data/fishing';
 import { itemData, type ItemId } from '../data/items';
 import { MAPS, type MapDef, type NpcDef } from '../data/maps';
 import type { MoveId } from '../data/moves';
@@ -51,6 +52,8 @@ class Game {
   private lastOutdoor = '';
   /** 자전거 타는 중 */
   riding = false;
+  /** 메뉴를 다 닫은 뒤에 할 일 (가방에서 낚싯대를 꺼낸 경우 등) */
+  afterMenu: (() => Promise<void>) | null = null;
   private bannerKey = 0;
 
   constructor() {
@@ -68,7 +71,7 @@ class Game {
       followerSpecies: () => this.save.party.find((m) => m.hp > 0)?.species ?? null,
       talkFollower: () => void this.run(() => SCRIPTS.follower()),
       riding: () => this.riding,
-      water: (dir) => void this.run(() => this.askSurf(dir)),
+      water: (dir) => void this.run(() => this.atWater(dir)),
       select: () => void this.run(() => this.toggleBike()),
     });
     setInterval(() => {
@@ -190,18 +193,54 @@ class Game {
     }
   }
 
-  /** 물을 마주 보고 A: 파도타기를 가지고 있으면 물 위로 */
-  private async askSurf(dir: Dir) {
-    if (!this.save.bag.surf) {
-      await say('물이 넘실거리고 있다.');
+  /** 물을 마주 보고 A: 낚싯대가 있으면 낚시, 파도타기가 있으면 물 위로. 물 위에서는 가방에서 낚싯대를 꺼내 쓴다 */
+  private async atWater(dir: Dir) {
+    if (this.world.surfing) return;
+    const rod = RODS.find((r) => this.save.bag[r]);
+    const canSurf = !!this.save.bag.surf && this.save.party.some((x) => x.hp > 0);
+    if (!rod && !canSurf) return say('물이 넘실거리고 있다.');
+    if (rod && canSurf) {
+      const k = await ask('물이 넘실거리고 있다.', ['낚시', '파도타기', '그만두기']);
+      if (k === 0) await this.fish(rod);
+      else if (k === 1) await this.startSurf(dir);
       return;
     }
-    const m = this.save.party.find((x) => x.hp > 0);
-    if (!m) return;
-    if (!(await yesNo('물이 넘실거리고 있다.\n파도타기를 하겠습니까?'))) return;
+    if (rod) {
+      if (await yesNo('물이 넘실거리고 있다.\n낚시를 하겠습니까?')) await this.fish(rod);
+      return;
+    }
+    if (await yesNo('물이 넘실거리고 있다.\n파도타기를 하겠습니까?')) await this.startSurf(dir);
+  }
+
+  private async startSurf(dir: Dir) {
+    const m = this.save.party.find((x) => x.hp > 0)!;
     await say(`${josa(monName(m), '과/와')} 함께\n파도타기를 시작했다!`);
     this.riding = false;
     this.world.startSurf(dir);
+  }
+
+  /** 낚싯줄을 드리우고 기다린다. 입질이 오면 바로 배틀 */
+  async fish(rod: RodId) {
+    const w = this.world;
+    if (!this.save.party.some((m) => m.hp > 0)) return say('싸울 수 있는 몬스터가 없다!');
+    this.riding = false;
+    await say(`${josa(this.player, '은/는')} ${josa(itemData(rod).name, '을/를')}\n물에 드리웠다!`);
+    w.fishing = { bite: false };
+    await w.wait(1.2 + Math.random() * 1.6);
+    const table = FISH[w.map.fish ?? 'fresh'][rod];
+    if (Math.random() >= ROD_BITE[rod]) {
+      w.fishing = null;
+      await say('...아무것도 걸리지 않는다.');
+      return;
+    }
+    w.fishing.bite = true;
+    sfx('exclaim');
+    await w.wait(0.8);
+    await say('앗! 뭔가 걸렸다!');
+    w.fishing = null;
+    const e = weighted(table);
+    const mon = createMon(e.species, randInt(e.min, e.max), { shiny: rand(8192) === 0 });
+    await this.battle({ kind: 'wild', enemy: [mon], terrain: 'water' });
   }
 
   /** 자전거 타기/내리기. 실내에서는 탈 수 없다 */
@@ -226,7 +265,7 @@ class Game {
       sfx('item');
       this.setFlag(`item_${d.id}`);
       await say(`${josa(this.player, '은/는')} ${josa(it.name, '을/를')}\n발견했다!`);
-      await say(`${josa(it.name, '을/를')} 가방의\n${it.pocket === 'balls' ? '캡슐' : '도구'} 주머니에 넣었다.`);
+      await say(`${josa(it.name, '을/를')} 가방의\n${it.pocket === 'balls' ? '볼' : '도구'} 주머니에 넣었다.`);
       return;
     }
     if (d.trainer) {

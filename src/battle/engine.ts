@@ -4,6 +4,7 @@ import { MOVES, CONFUSION_HIT, type MajorStatus, type MoveData, type MoveId, typ
 import { SPECIES } from '../data/species';
 import { effectiveness, isSpecial, type Type } from '../data/types';
 import { josa } from '../engine/josa';
+import type { BattleTerrain } from '../gfx/battleBg';
 import type { CharBase } from '../gfx/charArt';
 import { chance, pick, rand, randInt } from '../engine/rng';
 import { useItemOn } from './itemUse';
@@ -36,6 +37,8 @@ export interface BattleOpts {
   kind: 'wild' | 'trainer';
   enemy: Mon[];
   trainer?: TrainerInfo;
+  /** 배틀 배경 (없으면 지금 있는 곳으로 정한다. 낚시는 물) */
+  terrain?: BattleTerrain;
 }
 
 export interface BattleResult {
@@ -158,7 +161,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
       if (it.ball) {
         if (!wild) {
           await say(`${josa(ctx.playerName, '은/는')} ${josa(it.name, '을/를')}\n던졌다!`);
-          await say('트레이너가 캡슐을 쳐냈다!\n남의 몬스터는 잡을 수 없다!');
+          await say('트레이너가 볼을 쳐냈다!\n남의 몬스터는 잡을 수 없다!');
         } else if (await throwBall(it.ball, it.name)) {
           return result('caught');
         }
@@ -578,7 +581,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
     let a = Math.max(1, Math.floor(((3 * max - 2 * e.hp) * rate) / (3 * max)));
     if (e.status === 'slp' || e.status === 'frz') a += 10;
     a = Math.min(255, a);
-    // 마스터캡슐(배율 255 이상)은 반드시 잡힌다
+    // 마스터볼(배율 255 이상)은 반드시 잡힌다
     const caught = mult >= 255 || rand(256) <= a;
     const shakes = caught ? 3 : a < 10 ? 0 : a < 30 ? 1 : a < 70 ? randInt(1, 2) : 2;
     for (let i = 0; i < shakes; i++) await io.anim(1, 'shake');
@@ -591,7 +594,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
     }
     await io.anim(1, 'breakout');
     await say(
-      shakes === 0 ? '앗! 몬스터가 캡슐에서\n나와 버렸다!' : shakes === 1 ? '아앗! 잡았다고\n생각했는데!' : '아쉽다! 조금만 더 하면\n잡을 수 있었는데!',
+      shakes === 0 ? '앗! 몬스터가 볼에서\n나와 버렸다!' : shakes === 1 ? '아앗! 잡았다고\n생각했는데!' : '아쉽다! 조금만 더 하면\n잡을 수 있었는데!',
     );
     return false;
   }

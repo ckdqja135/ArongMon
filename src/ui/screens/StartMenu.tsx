@@ -34,6 +34,11 @@ export async function openStartMenu() {
     if (i < 0 || entries[i].label === '닫기') return;
     last = i;
     await entries[i].run();
+    if (G.afterMenu) {
+      const next = G.afterMenu;
+      G.afterMenu = null;
+      return next();
+    }
     if (entries[i].label === '리포트') return;
   }
 }

@@ -2,6 +2,7 @@
 import { FRONT_ONLY, MON_ART, monPalette } from '../data/monArt';
 import { ARONG_FIELD_PAL, arongFieldFrame, hasFieldArt } from './arongField';
 import { BADGE_ART, dimPalette } from './badgeArt';
+import { battleBgGrid, platformGrid, type BattleTerrain, type BattleTime } from './battleBg';
 import { fieldBox, monOverride } from './monOverrides';
 import { CHAR_H, CHAR_W, EXCLAIM, ITEM_POUCH, charFrame, type CharBase, type Dir } from './charArt';
 import { DESIGN_SIZE, renderBack, renderFront, renderIcon, renderMonster } from './monsterArt';
@@ -186,6 +187,22 @@ export const heartCanvas = () =>
       ['#ffffff', '#f86888', '#c83858', '#5c1c2c'],
     ),
   );
+/** 배틀 배경 (256x144) */
+export function battleBgCanvas(terrain: BattleTerrain, time: BattleTime) {
+  return cached(`bbg:${terrain}:${time}`, () => {
+    const { grid, pal } = battleBgGrid(terrain, time);
+    return gridCanvas(grid, pal);
+  });
+}
+
+/** 배틀 발판 */
+export function platformCanvas(terrain: BattleTerrain, time: BattleTime, w: number, h: number) {
+  return cached(`pf:${terrain}:${time}:${w}x${h}`, () => {
+    const { grid, pal } = platformGrid(terrain, time, w, h);
+    return gridCanvas(grid, pal);
+  });
+}
+
 /** 체육관 배지. on이 아니면 색을 뺀 그림자 */
 export function badgeCanvas(id: string, on: boolean) {
   const b = BADGE_ART[id];

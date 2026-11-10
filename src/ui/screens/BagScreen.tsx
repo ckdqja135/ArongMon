@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { canUseOn, useItemOn } from '../../battle/itemUse';
+import { RODS, type RodId } from '../../data/fishing';
 import { ITEMS, itemData, type ItemId, type Pocket } from '../../data/items';
 import { josa } from '../../engine/josa';
 import { useButtons } from '../../engine/input';
@@ -15,7 +16,7 @@ export const openBag = (mode: BagMode) => openOverlay<BagResult>((done) => <BagS
 
 const POCKETS: { id: Pocket; name: string }[] = [
   { id: 'items', name: '도구' },
-  { id: 'balls', name: '캡슐' },
+  { id: 'balls', name: '볼' },
   { id: 'key', name: '중요한 물건' },
 ];
 
@@ -69,6 +70,14 @@ function BagScreen({ mode, onDone }: { mode: BagMode; onDone: (r: BagResult) => 
     if (it.pocket === 'items') await useOnMon(id);
     else if (it.pocket === 'balls') setMsg('여기서는 쓸 수 없다.');
     else if (id === 'bicycle') setMsg((await G.toggleBike(true)) ?? '')
+    else if (RODS.includes(id as RodId)) {
+      if (!G.world.facingWater()) setMsg('여기서는 낚시를\n할 수 없다!');
+      else {
+        // 가방과 메뉴를 닫고 낚시한다
+        G.afterMenu = () => G.fish(id as RodId);
+        onDone(null);
+      }
+    }
     else setMsg(`${josa(G.player, '은/는')} ${josa(it.name, '을/를')}\n펼쳐 보았다.`);
   };
 

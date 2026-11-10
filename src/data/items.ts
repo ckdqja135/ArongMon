@@ -19,10 +19,10 @@ export interface ItemData {
 }
 
 export const ITEMS = {
-  capsule: { name: '몬스터캡슐', price: 200, pocket: 'balls', ball: 1, desc: '야생 몬스터에게 던져서\n잡는 캡슐.' },
-  supercapsule: { name: '슈퍼캡슐', price: 600, pocket: 'balls', ball: 1.5, desc: '몬스터캡슐보다 잡기 쉬운\n성능 좋은 캡슐.' },
-  mastercapsule: { name: '마스터캡슐', price: 0, pocket: 'balls', ball: 255, desc: '어떤 야생 몬스터든\n반드시 잡을 수 있다.' },
-  hypercapsule: { name: '하이퍼캡슐', price: 1200, pocket: 'balls', ball: 2, desc: '슈퍼캡슐보다 더 잘 잡히는\n고성능 캡슐.' },
+  capsule: { name: '몬스터볼', price: 200, pocket: 'balls', ball: 1, desc: '야생 몬스터에게 던져서\n잡는 볼.' },
+  supercapsule: { name: '슈퍼볼', price: 600, pocket: 'balls', ball: 1.5, desc: '몬스터볼보다 잡기 쉬운\n성능 좋은 볼.' },
+  mastercapsule: { name: '마스터볼', price: 0, pocket: 'balls', ball: 255, desc: '어떤 야생 몬스터든\n반드시 잡을 수 있다.' },
+  hypercapsule: { name: '하이퍼볼', price: 1200, pocket: 'balls', ball: 2, desc: '슈퍼볼보다 더 잘 잡히는\n고성능 볼.' },
   potion: { name: '회복약', price: 300, pocket: 'items', heal: 20, desc: '몬스터의 HP를 20\n회복한다.' },
   superpotion: { name: '좋은회복약', price: 700, pocket: 'items', heal: 50, desc: '몬스터의 HP를 50\n회복한다.' },
   hyperpotion: { name: '고급회복약', price: 1200, pocket: 'items', heal: 200, desc: '몬스터의 HP를 200\n회복한다.' },
@@ -42,6 +42,9 @@ export const ITEMS = {
   wakebell: { name: '깨움방울', price: 0, pocket: 'key', desc: '맑은 소리로 잠든 몬스터를\n깨운다.' },
   surf: { name: '파도타기', price: 0, pocket: 'key', desc: '몬스터와 함께 물 위를 건넌다.\n물가에서 A 버튼으로 쓴다.' },
   secretpotion: { name: '비상약', price: 0, pocket: 'key', desc: '섬도시 약국의 귀한 약.\n아픈 몬스터가 기운을 차린다.' },
+  oldrod: { name: '낡은낚싯대', price: 0, pocket: 'key', desc: '낡은 낚싯대. 물가에서 쓰면\n몬스터를 낚을 수 있다.' },
+  goodrod: { name: '좋은낚싯대', price: 0, pocket: 'key', desc: '쓸 만한 낚싯대. 물가에서\n쓰면 더 센 몬스터가 낚인다.' },
+  superrod: { name: '대단한낚싯대', price: 0, pocket: 'key', desc: '최고의 낚싯대. 물가에서\n쓰면 귀한 몬스터도 낚인다.' },
   bicycle: { name: '자전거', price: 0, pocket: 'key', desc: '걷는 것보다 두 배 빠르다.\nSELECT 버튼으로 타고 내린다.' },
 } satisfies Record<string, ItemData>;
 

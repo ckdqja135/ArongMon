@@ -3,6 +3,7 @@ import { ITEMS, itemData } from '../src/data/items';
 import { MAPS } from '../src/data/maps';
 import { MON_ART, MON_COLORS } from '../src/data/monArt';
 import { MOVES } from '../src/data/moves';
+import { FISH } from '../src/data/fishing';
 import { SPECIES } from '../src/data/species';
 import { TILES } from '../src/gfx/tileArt';
 
@@ -64,6 +65,9 @@ for (const m of Object.values(MAPS)) {
   for (const tod of ['morning', 'day', 'night'] as const)
     for (const e of m.encounters?.[tod] ?? []) if (!SPECIES[e.species]) err(`${m.id}: 야생 몬스터 없음 ${e.species}`);
 }
+
+for (const [spot, rods] of Object.entries(FISH))
+  for (const [rod, table] of Object.entries(rods)) for (const e of table) if (!SPECIES[e.species]) err(`낚시 ${spot}/${rod}: 몬스터 없음 ${e.species}`);
 
 const gen1 = Object.values(SPECIES).filter((s) => s.no > 0);
 if (gen1.length !== 151 || gen1.some((s, i) => s.no !== i + 1)) err(`1세대 도감 번호가 001~151이 아님 (${gen1.length}종)`);

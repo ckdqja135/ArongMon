@@ -105,6 +105,8 @@ export class World {
   surfing = false;
   /** 얼음 위를 미끄러지는 중 (방향키가 듣지 않는다) */
   private sliding = false;
+  /** 낚싯줄을 드리운 중. bite면 찌가 물속으로 끌려 들어간다 */
+  fishing: { bite: boolean } | null = null;
   private lastBump = 0;
   private waiters: { check: () => boolean; resolve: () => void }[] = [];
   private unsubInput: (() => void) | null = null;
@@ -326,7 +328,14 @@ export class World {
       if (s && (p.dir === 'up' || p.dir === 'left' || p.dir === 'right')) this.hooks.sign(s.text);
       return;
     }
-    if (!this.surfing && this.tile(tx, ty).water && !this.npcAt(tx, ty)) this.hooks.water(p.dir);
+    if (this.tile(tx, ty).water && !this.npcAt(tx, ty)) this.hooks.water(p.dir);
+  }
+
+  /** 바로 앞 칸이 물인지 (낚시할 수 있는지) */
+  facingWater() {
+    const p = this.player;
+    const [dx, dy] = DIR_V[p.dir];
+    return !!this.tile(p.x + dx, p.y + dy).water && !this.npcAt(p.x + dx, p.y + dy);
   }
 
   /** 파도타기 시작: 바라보는 물 칸으로 뛰어든다 */
@@ -561,6 +570,41 @@ export class World {
   }
 
   // ── 그리기 ──
+  /** 낚싯대·낚싯줄·찌. 입질이 오면 찌가 잠기고 머리 위에 느낌표가 뜬다 */
+  private drawFishing(ctx: CanvasRenderingContext2D, sx: number, sy: number) {
+    const p = this.player;
+    const [dx, dy] = DIR_V[p.dir];
+    // 손 위치와 낚싯대 끝 (몸 앞으로 뻗는다)
+    const hand: Record<Dir, [number, number]> = { down: [12, 10], up: [3, 6], left: [2, 9], right: [13, 9] };
+    const [hx, hy] = hand[p.dir];
+    const x0 = sx + hx, y0 = sy + hy;
+    const x1 = x0 + dx * 6 + (dy ? 2 : 0), y1 = y0 + dy * 5 - (dx ? 5 : 0);
+    const bite = this.fishing!.bite;
+    // 찌는 바라보는 물 칸 가운데에서 출렁인다
+    const bx = sx + dx * TILE + 7;
+    const by = sy + dy * TILE + 8 + (bite ? 2 : Math.floor(this.time * 2) % 2);
+    const dot = (x: number, y: number, c: string) => {
+      ctx.fillStyle = c;
+      ctx.fillRect(x, y, 1, 1);
+    };
+    const line = (ax: number, ay: number, bx2: number, by2: number, c: string) => {
+      const n = Math.max(Math.abs(bx2 - ax), Math.abs(by2 - ay), 1);
+      for (let i = 0; i <= n; i++) dot(Math.round(ax + ((bx2 - ax) * i) / n), Math.round(ay + ((by2 - ay) * i) / n), c);
+    };
+    line(x0, y0, x1, y1, '#7a4a20');
+    line(x1, y1, bx + 1, by, '#e8e8f0');
+    if (bite) {
+      // 물결
+      for (const [ox, oy] of [[-2, 1], [-1, 2], [0, 2], [1, 2], [2, 2], [3, 2], [4, 1]]) dot(bx + ox, by + oy - 1, '#ffffff');
+      ctx.drawImage(exclaimCanvas(), sx + 3, sy - (CHAR_SIZE.h - TILE) - 13);
+    } else {
+      ctx.fillStyle = '#e04040';
+      ctx.fillRect(bx, by - 1, 3, 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(bx, by + 1, 3, 1);
+    }
+  }
+
   render(ctx: CanvasRenderingContext2D) {
     const p = this.player;
     const camX = Math.round(p.px) - PLAYER_SX;
@@ -623,6 +667,7 @@ export class World {
       }
       const gx = Math.round(a.px / TILE), gy = Math.round(a.py / TILE);
       if (this.tile(gx, gy).grass && !a.jump) ctx.drawImage(grassOverlay(), gx * TILE - camX, gy * TILE - camY);
+      if (a === p && this.fishing) this.drawFishing(ctx, sx, sy);
       if (npc && npc.emote > 0) ctx.drawImage(exclaimCanvas(), sx + 3, sy - (CHAR_SIZE.h - TILE) - 13);
       if (mon && f && f.heart > 0) ctx.drawImage(heartCanvas(), sx + 3, sy - 18 - Math.round((1 - f.heart) * 4));
     }

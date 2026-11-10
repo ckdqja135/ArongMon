@@ -21,6 +21,7 @@ export interface SideView {
 
 export interface BattleViewState {
   kind: BattleOpts['kind'];
+  terrain: BattleOpts['terrain'] | null;
   trainer: TrainerInfo | null;
   trainerVisible: boolean;
   /** 상대가 가진 몬스터 전부 (남은 수 표시용) */
@@ -72,6 +73,7 @@ export class BattleSession {
   constructor(opts: BattleOpts, private ui: BattleUIHooks) {
     this.store = createStore<BattleViewState>({
       kind: opts.kind,
+      terrain: opts.terrain ?? null,
       trainer: opts.trainer ?? null,
       trainerVisible: !!opts.trainer,
       enemyParty: opts.enemy,

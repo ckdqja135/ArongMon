@@ -9,7 +9,8 @@ import { useButtons } from '../../engine/input';
 import { G, PARTY_MAX } from '../../game/game';
 import { timeOfDay } from '../../game/world';
 import type { CharBase } from '../../gfx/charArt';
-import { charCanvas, paint } from '../../gfx/sprites';
+import type { BattleTerrain, BattleTime } from '../../gfx/battleBg';
+import { battleBgCanvas, charCanvas, paint, platformCanvas } from '../../gfx/sprites';
 import type { CharPalName } from '../../gfx/palettes';
 import { openBag } from '../screens/BagScreen';
 import { openParty } from '../screens/PartyScreen';
@@ -18,14 +19,12 @@ import { Frame, GenderMark, HpBar, Menu, MonImg, TextBox, TypeTag } from '../wid
 export function BattleScreen({ session }: { session: BattleSession }) {
   const s = useStore(session.store);
   const [player, enemy] = s.sides;
-  const outdoor = G.world.map.outdoor;
-  const bg = outdoor ? `bg-${timeOfDay()}` : 'bg-indoor';
+  const terrain = s.terrain ?? terrainHere();
   // 급소/효과 굉장: 화면 전체가 흔들린다
   const quake = s.sides.some((v) => v.anim === 'hitBig');
   return (
-    <div className={`battle ${bg}${s.outro ? ' outro' : ''}${quake ? ' quake' : ''}`}>
-      <div className="platform enemy-pf" />
-      <div className="platform player-pf" />
+    <div className={`battle${s.outro ? ' outro' : ''}${quake ? ' quake' : ''}`}>
+      <Backdrop terrain={terrain} time={battleTime()} />
       {s.trainer && s.trainerVisible && <TrainerSprite base={s.trainer.sprite.base} pal={s.trainer.sprite.pal as CharPalName} />}
       <BattlerSprite side={enemy} view="front" className="enemy-sprite" />
       <BattlerSprite side={player} view="back" className="player-sprite" />
@@ -44,6 +43,40 @@ export function BattleScreen({ session }: { session: BattleSession }) {
       {s.levelStats && <LevelStats {...s.levelStats} />}
       {s.intro && <div className="battle-intro" />}
     </div>
+  );
+}
+
+/** 지금 있는 곳의 배틀 배경: 물 위면 물, 바깥이면 들판, 동굴 바닥이 있으면 동굴, 그 밖은 실내 */
+function terrainHere(): BattleTerrain {
+  const w = G.world;
+  if (w.surfing) return 'water';
+  if (w.map.outdoor) return 'field';
+  return w.map.tiles.some((r) => r.includes(';')) ? 'cave' : 'indoor';
+}
+
+/** 배틀 배경의 시간: 오후 5~8시는 노을 */
+function battleTime(): BattleTime {
+  const h = new Date().getHours();
+  return h >= 17 && h < 20 ? 'evening' : timeOfDay();
+}
+
+const PF = { enemy: [120, 30], player: [152, 40] } as const;
+
+function Backdrop({ terrain, time }: { terrain: BattleTerrain; time: BattleTime }) {
+  const bg = useRef<HTMLCanvasElement>(null);
+  const ep = useRef<HTMLCanvasElement>(null);
+  const pp = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    paint(bg.current, battleBgCanvas(terrain, time));
+    paint(ep.current, platformCanvas(terrain, time, ...PF.enemy));
+    paint(pp.current, platformCanvas(terrain, time, ...PF.player));
+  }, [terrain, time]);
+  return (
+    <>
+      <canvas ref={bg} className="pix battle-bg" />
+      <canvas ref={ep} className="pix platform enemy-pf" />
+      <canvas ref={pp} className="pix platform player-pf" />
+    </>
   );
 }
 
@@ -126,7 +159,7 @@ function PlayerHud({ side }: { side: SideView }) {
   );
 }
 
-/** 가진 몬스터 수: 싸울 수 있으면 캡슐, 기절했으면 회색 캡슐, 빈 자리는 작은 점 */
+/** 가진 몬스터 수: 싸울 수 있으면 볼, 기절했으면 회색 볼, 빈 자리는 작은 점 */
 function PartyBalls({ party, className }: { party: Mon[]; className: string }) {
   return (
     <div className={`party-balls ${className}`}>

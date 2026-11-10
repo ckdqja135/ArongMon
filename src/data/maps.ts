@@ -1,4 +1,5 @@
 // 지도 데이터. 문자 하나가 16x16 타일 하나 (tileArt.ts의 TILES 참고).
+import type { FishSpot } from './fishing';
 import type { Dir } from '../gfx/charArt';
 import type { CharBase } from '../gfx/charArt';
 import type { CharPalName } from '../gfx/palettes';
@@ -67,6 +68,8 @@ export interface MapDef {
   triggers?: { x: number; y: number; script: string }[];
   /** surf: 파도타기 중에 물 위에서 나오는 몬스터 */
   encounters?: { rate: number; surf?: Encounter[] } & Partial<Record<TimeOfDay, Encounter[]>>;
+  /** 낚시로 낚이는 몬스터 (물이 있는 맵, 없으면 민물) */
+  fish?: FishSpot;
   /** 배경음악 (없으면 장소 종류로 정한다) */
   music?: string;
   /** 회복센터처럼 기절 후 돌아올 위치 */
@@ -244,7 +247,7 @@ export const MAPS: Record<string, MapDef> = {
     warps: doorWarps('sproutHouse'),
     npcs: [
       { id: 'boy', x: 2, y: 2, dir: 'down', sprite: { base: 'cap', pal: 'yellow' }, move: 'wander',
-        text: '풀숲에 들어가면 야생 몬스터가\n튀어나와!\n약하게 만든 다음 캡슐을 던져!' },
+        text: '풀숲에 들어가면 야생 몬스터가\n튀어나와!\n약하게 만든 다음 볼을 던져!' },
     ],
   },
 
@@ -346,6 +349,7 @@ export const MAPS: Record<string, MapDef> = {
         text: '이슬시티 체육관 관장 나래는\n비행 타입 몬스터를 쓴대.' },
       { id: 'dewKid', x: 8, y: 7, sprite: { base: 'cap', pal: 'green' }, move: 'wander',
         text: '빨간 지붕은 회복센터,\n파란 지붕은 아롱마트야!' },
+      { id: 'dewFisher', x: 15, y: 17, dir: 'right', sprite: { base: 'hat', pal: 'brown' }, script: 'oldRodFisher' },
     ],
     signs: [
       { x: 3, y: 14, text: '이슬시티\n아침 이슬이 반짝이는 도시' },
@@ -375,7 +379,7 @@ export const MAPS: Record<string, MapDef> = {
     npcs: [
       { id: 'clerk', x: 0, y: 4, dir: 'right', sprite: { base: 'cap', pal: 'clerk' }, script: 'mart' },
       { id: 'shopper', x: 5, y: 2, sprite: { base: 'bun', pal: 'yellow' }, move: 'wander',
-        text: '몬스터캡슐은 많이 사 둘수록\n좋아!' },
+        text: '몬스터볼은 많이 사 둘수록\n좋아!' },
     ],
   },
 
@@ -1229,6 +1233,7 @@ export const MAPS: Record<string, MapDef> = {
   harbor: {
     id: 'harbor',
     name: '항구시티',
+    fish: 'sea',
     outdoor: true,
     border: '~',
     tiles: [
@@ -1270,6 +1275,7 @@ export const MAPS: Record<string, MapDef> = {
         text: '등대를 지키는 라이츄가\n아프대. 체육관 관장 시린이\n밤낮으로 곁에 있대.' },
       { id: 'harborKid', x: 17, y: 6, sprite: { base: 'cap', pal: 'yellow' }, move: 'wander',
         text: '바다 건너 섬도시에는\n엄청 센 격투 관장이 있어!' },
+      { id: 'harborFisher', x: 10, y: 19, dir: 'left', sprite: { base: 'hat', pal: 'yellow' }, script: 'goodRodFisher' },
     ],
     signs: [{ x: 20, y: 18, text: '항구시티\n바닷바람이 부는 항구 도시' }],
     healSpot: { x: 14, y: 10 },
@@ -1383,6 +1389,7 @@ export const MAPS: Record<string, MapDef> = {
   route6: {
     id: 'route6',
     name: '6번수로',
+    fish: 'sea',
     outdoor: true,
     border: '~',
     tiles: [
@@ -1435,6 +1442,7 @@ export const MAPS: Record<string, MapDef> = {
   island: {
     id: 'island',
     name: '섬도시',
+    fish: 'sea',
     outdoor: true,
     border: '~',
     tiles: [
@@ -1798,6 +1806,7 @@ export const MAPS: Record<string, MapDef> = {
   lakeOfRage: {
     id: 'lakeOfRage',
     name: '분노의 호수',
+    fish: 'rage',
     outdoor: true,
     border: 'T',
     tiles: [
@@ -2021,6 +2030,7 @@ export const MAPS: Record<string, MapDef> = {
         text: '이 마을 사람들은 모두 용을\n기른대. 체육관 관장 단비 누나는\n진 형의 사촌이야!' },
       { id: 'btGranny', x: 15, y: 12, sprite: { base: 'bun', pal: 'prof' }, move: 'wander',
         text: '북쪽 용의 굴에는 마을 장로님이\n계신단다. 용을 대하는 마음을\n보시는 분이지.' },
+      { id: 'btFisher', x: 20, y: 12, dir: 'down', sprite: { base: 'hat', pal: 'green' }, script: 'superRodFisher' },
     ],
     signs: [{ x: 3, y: 18, text: '용의 마을\n용과 함께 사는 산골 마을' }],
     healSpot: { x: 5, y: 10 },
@@ -2107,6 +2117,7 @@ export const MAPS: Record<string, MapDef> = {
   dragonDen: {
     id: 'dragonDen',
     name: '용의 굴',
+    fish: 'dragon',
     music: 'dungeon',
     border: '#',
     tiles: [
@@ -2139,6 +2150,7 @@ export const MAPS: Record<string, MapDef> = {
   route10: {
     id: 'route10',
     name: '10번수로',
+    fish: 'sea',
     outdoor: true,
     border: 'T',
     tiles: [
@@ -2393,6 +2405,7 @@ export const MAPS: Record<string, MapDef> = {
   fadedCave: {
     id: 'fadedCave',
     name: '빛바랜 동굴',
+    fish: 'cave',
     music: 'dungeon',
     border: '#',
     tiles: [
