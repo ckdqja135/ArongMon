@@ -52,6 +52,8 @@ export interface BattleIO {
   message(text: string): Promise<void>;
   refresh(): void;
   setActive(side: SideId, mon: Mon | null): void;
+  /** 던지는 볼 종류 (던지는 연출에 쓴다) */
+  throwing?(ball: ItemId): void;
   /** 변신: 겉모습을 species로 바꾼다 (null이면 원래대로) */
   transform?(side: SideId, species: string | null): void;
   /** type: 맞았을 때 터지는 이펙트 색 */
@@ -162,7 +164,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
         if (!wild) {
           await say(`${josa(ctx.playerName, '은/는')} ${josa(it.name, '을/를')}\n던졌다!`);
           await say('트레이너가 볼을 쳐냈다!\n남의 몬스터는 잡을 수 없다!');
-        } else if (await throwBall(it.ball, it.name)) {
+        } else if (await throwBall(it.ball, it.name, action.item)) {
           return result('caught');
         }
       } else {
@@ -572,9 +574,10 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
   }
 
   // ── 포획 ──
-  async function throwBall(mult: number, ballName: string): Promise<boolean> {
+  async function throwBall(mult: number, ballName: string, ball: ItemId): Promise<boolean> {
     const e = act(E);
     await say(`${josa(ctx.playerName, '은/는')}\n${josa(ballName, '을/를')} 던졌다!`);
+    io.throwing?.(ball);
     await io.anim(1, 'throw');
     const max = calcStats(e).hp;
     const rate = Math.min(255, Math.floor(spec(e).catchRate * mult));

@@ -64,5 +64,3 @@ export const CHAR_PAL = {
 } satisfies Record<string, Palette>;
 
 export type CharPalName = keyof typeof CHAR_PAL;
-
-export const ITEM_PAL: Palette = ['#ffffff', '#f8e070', '#e08830', '#3c2414'];

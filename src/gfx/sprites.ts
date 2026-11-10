@@ -3,10 +3,11 @@ import { FRONT_ONLY, MON_ART, monPalette } from '../data/monArt';
 import { ARONG_FIELD_PAL, arongFieldFrame, hasFieldArt } from './arongField';
 import { BADGE_ART, dimPalette } from './badgeArt';
 import { battleBgGrid, platformGrid, type BattleTerrain, type BattleTime } from './battleBg';
-import { fieldBox, monOverride } from './monOverrides';
-import { CHAR_H, CHAR_W, EXCLAIM, ITEM_POUCH, charFrame, type CharBase, type Dir } from './charArt';
+import { fieldBox, hdPending, loadMonArt, monOverride } from './monOverrides';
+import { ballGrid, ballPalette, groundBallGrid, smallBallGrid, type BallId } from './ballArt';
+import { CHAR_H, CHAR_W, EXCLAIM, charFrame, type CharBase, type Dir } from './charArt';
 import { DESIGN_SIZE, renderBack, renderFront, renderIcon, renderMonster } from './monsterArt';
-import { CHAR_PAL, ITEM_PAL, PAL, type CharPalName } from './palettes';
+import { CHAR_PAL, PAL, type CharPalName } from './palettes';
 import { gridToRgba, type Grid, type Palette } from './pixel';
 import { SWIM_TUBE } from './fieldArt';
 import { TILES, tileLayers } from './tileArt';
@@ -75,6 +76,7 @@ function fromOverride(src: HTMLCanvasElement, shiny: boolean, flip = false) {
   const c = document.createElement('canvas');
   c.width = src.width;
   c.height = src.height;
+  if (src.dataset.scale) c.dataset.scale = src.dataset.scale;
   const ctx = c.getContext('2d')!;
   if (shiny) ctx.filter = 'hue-rotate(150deg)';
   if (flip) {
@@ -85,14 +87,18 @@ function fromOverride(src: HTMLCanvasElement, shiny: boolean, flip = false) {
   return c;
 }
 
-export function monCanvas(species: string, view: MonView, shiny = false) {
+/** 고해상도 그림을 아직 안 불러왔으면 null (loadMonArt로 불러온 뒤 다시 부른다) */
+export function monCanvas(species: string, view: MonView, shiny = false): HTMLCanvasElement | null {
+  if (hdPending(species, shiny)) return null;
   return cached(`m:${species}:${view}:${shiny ? 1 : 0}`, () => {
-    // 뒷모습: 앞모습만 쓰는 몬스터이거나 PNG를 넣은 몬스터는 앞모습 그대로
+    // 뒷모습: 앞모습만 쓰는 몬스터이거나 그림 파일을 넣은 몬스터는 앞모습 그대로
     const front = monOverride(species, 'front');
     const v = view === 'back' && (FRONT_ONLY.has(species) || front) ? 'front' : view;
-    const o = v === 'back' ? undefined : monOverride(species, v);
+    // 이로치 고해상도 그림이 따로 있으면 그것을, 없으면 색을 돌려서
+    const own = shiny && v !== 'back' ? monOverride(species, v, true) : undefined;
+    const o = own ?? (v === 'back' ? undefined : monOverride(species, v));
     // 내 쪽에 나올 때는 상대를 보도록 좌우를 뒤집는다 (아롱이는 정면 그림이라 그대로)
-    if (o) return fromOverride(o, shiny, view === 'back' && !FRONT_ONLY.has(species));
+    if (o) return fromOverride(o, shiny && !own, view === 'back' && !FRONT_ONLY.has(species));
     const art = MON_ART[species];
     const g = v === 'front' ? renderFront(art) : v === 'back' ? renderBack(art) : renderIcon(art);
     return gridCanvas(g, monPalette(species, shiny));
@@ -100,7 +106,11 @@ export function monCanvas(species: string, view: MonView, shiny = false) {
 }
 
 /** 필드용 몬스터 (따라다니는 몬스터, 집에 있는 아롱이). 아롱이는 방향·걸음마다 그린 16x16 그림을 쓴다 */
-export function monFieldCanvas(species: string, dir: Dir, frame: 0 | 1 | 2 = 0) {
+export function monFieldCanvas(species: string, dir: Dir, frame: 0 | 1 | 2 = 0): HTMLCanvasElement | null {
+  if (hdPending(species)) {
+    void loadMonArt(species);
+    return null;
+  }
   if (hasFieldArt(species)) {
     return cached(`mf:${species}:${dir}:${frame}`, () => gridCanvas(arongFieldFrame(species, dir, frame), ARONG_FIELD_PAL));
   }
@@ -130,7 +140,12 @@ export const shadowCanvas = (w = 12) =>
 
 export const tubeCanvas = () => cached('tube', () => gridCanvas(SWIM_TUBE, ['#ffffff', '#f04848', '#b82828', '#2c2c3a']));
 
-export const pouchCanvas = () => cached('pouch', () => gridCanvas(ITEM_POUCH, ITEM_PAL));
+/** 필드에 떨어진 도구 (몬스터볼) */
+export const groundBallCanvas = () => cached('groundBall', () => gridCanvas(groundBallGrid(), ballPalette('capsule')));
+/** 던지는 볼 (16x16) */
+export const ballCanvas = (id: BallId) => cached(`ball:${id}`, () => gridCanvas(ballGrid(id), ballPalette(id)));
+/** HP 창의 가진 몬스터 수 (8x8). 기절했으면 회색 */
+export const smallBallCanvas = (fainted: boolean) => cached(`ballS:${fainted}`, () => gridCanvas(smallBallGrid('capsule'), ballPalette('capsule', fainted)));
 /** 자전거 (16x11). 옆모습은 바퀴 두 개, 앞/뒷모습은 바퀴 하나 */
 export function bikeCanvas(dir: Dir) {
   return cached(`bike:${dir}`, () => {
@@ -216,6 +231,11 @@ export function paint(target: HTMLCanvasElement | null, src: HTMLCanvasElement) 
   if (!target) return;
   target.width = src.width;
   target.height = src.height;
+  // 고해상도 그림은 화면에서 원래 크기의 1/scale로 보이고, 부드럽게 그린다 (styles.css .hd)
+  const s = Number(src.dataset.scale ?? 1);
+  target.classList.toggle('hd', s > 1);
+  target.style.setProperty('--w', s > 1 ? `${src.width / s}px` : '');
+  target.style.setProperty('--h', s > 1 ? `${src.height / s}px` : '');
   const ctx = target.getContext('2d')!;
   ctx.clearRect(0, 0, src.width, src.height);
   ctx.drawImage(src, 0, 0);

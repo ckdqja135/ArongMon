@@ -216,10 +216,11 @@ export const SCRIPTS: Record<string, Script> = {
     p.dir = 'up';
     await say(`${RIVAL()}: 어, ${P()}! 여기까지 왔구나.`);
     await say(`${RIVAL()}: 난 벌써 깃털배지를 땄어.\n내 몬스터가 얼마나 강해졌는지 보여 줄게!`);
-    const evo = RIVAL_EVOLVED[G.save.rivalStarter ?? 'charmander'] ?? 'charmeleon';
+    // 아직 진화 전 스타팅 (진화한 모습은 3차전부터)
+    const starter = G.save.rivalStarter ?? 'charmander';
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('zubat', 12), createMon('gastly', 14), createMon(evo, 16)],
+      enemy: [createMon('zubat', 9), createMon('gastly', 10), createMon(starter, 11)],
       trainer: { className: '라이벌', name: RIVAL(), prize: 960, sprite: { base: 'cap', pal: 'rival' }, lose: `${RIVAL()}: 칫... 이번엔 내가 졌어.` },
     });
     if (res.outcome === 'win') {

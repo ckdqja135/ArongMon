@@ -5,7 +5,7 @@ import { sfx } from '../engine/sound';
 import { chance, pick, randInt } from '../engine/rng';
 import type { Dir } from '../gfx/charArt';
 import {
-  CHAR_SIZE, SCREEN_H, SCREEN_W, TILE, bikeCanvas, charCanvas, exclaimCanvas, grassOverlay, heartCanvas, monFieldCanvas, pouchCanvas, shadowCanvas, tileCanvas, tubeCanvas,
+  CHAR_SIZE, SCREEN_H, SCREEN_W, TILE, bikeCanvas, charCanvas, exclaimCanvas, grassOverlay, heartCanvas, monFieldCanvas, groundBallCanvas, shadowCanvas, tileCanvas, tubeCanvas,
 } from '../gfx/sprites';
 import { hasFieldArt } from '../gfx/arongField';
 import { TILES, tileVariant, type TileDef } from '../gfx/tileArt';
@@ -641,14 +641,14 @@ export class World {
       const walkFrame = (a.moving && !slidingNow && a.t > 0.25 && a.t < 0.75 ? (a.step % 2 ? 1 : 2) : 0) as 0 | 1 | 2;
       const sprite = npc ? npc.def.sprite : mon ? { mon } : this.hooks.playerSprite();
       if (sprite === 'item') {
-        ctx.drawImage(pouchCanvas(), sx, sy);
+        ctx.drawImage(groundBallCanvas(), sx, sy);
       } else if ('mon' in sprite) {
         const drawn = hasFieldArt(sprite.mon);
         // 그려 둔 걸음 그림이 있으면 발을 번갈아 딛고, 서 있을 때도 가끔 발을 구른다. 없으면 통통 튀기만 한다
         const fidget = !a.moving && (this.time + a.x * 0.37 + a.y * 0.61) % 1.6 < 0.22;
         const bob = a.moving ? Math.round(Math.sin(a.t * Math.PI) * (drawn ? 1 : 2)) : 0;
         const c = monFieldCanvas(sprite.mon, a.dir, drawn ? (fidget ? 1 : walkFrame) : 0);
-        ctx.drawImage(c, sx + TILE / 2 - c.width / 2, sy + TILE - c.height - bob);
+        if (c) ctx.drawImage(c, sx + TILE / 2 - c.width / 2, sy + TILE - c.height - bob);
       } else if (swimming && 'base' in sprite) {
         // 물 위: 윗몸만 그리고 허리에 튜브를 끼운다. 물결에 맞춰 살짝 출렁인다
         const bob = Math.floor(this.time * 3) % 2;

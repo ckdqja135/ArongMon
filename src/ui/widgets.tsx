@@ -4,6 +4,7 @@ import { TYPE_NAME, type Type } from '../data/types';
 import { useButtons, type Button } from '../engine/input';
 import { sfx } from '../engine/sound';
 import { settings } from '../game/settings';
+import { loadMonArt } from '../gfx/monOverrides';
 import { badgeCanvas, monCanvas, paint, type MonView } from '../gfx/sprites';
 import { paginate } from './text';
 
@@ -159,7 +160,13 @@ export function Menu({ items, onSelect, onCancel, initial = 0, columns = 1, acti
 
 export function MonImg({ species, view, shiny = false, className, style }: { species: string; view: MonView; shiny?: boolean; className?: string; style?: CSSProperties }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => paint(ref.current, monCanvas(species, view, shiny)), [species, view, shiny]);
+  // 고해상도 그림은 처음 쓸 때 불러오고, 다 불러오면 다시 그린다
+  const [loaded, setLoaded] = useState(0);
+  useEffect(() => {
+    const c = monCanvas(species, view, shiny);
+    if (c) paint(ref.current, c);
+    else void loadMonArt(species, shiny).then(() => setLoaded((n) => n + 1));
+  }, [species, view, shiny, loaded]);
   return <canvas ref={ref} className={`pix ${className ?? ''}`} style={style} />;
 }
 

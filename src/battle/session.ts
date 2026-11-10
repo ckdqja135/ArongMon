@@ -1,4 +1,5 @@
 // 배틀 화면 상태. 엔진의 BattleIO 요청을 화면 상태 변화로 바꾼다.
+import type { ItemId } from '../data/items';
 import type { MoveId } from '../data/moves';
 import type { Type } from '../data/types';
 import { playMusic, sfx, type Sfx } from '../engine/sound';
@@ -22,6 +23,8 @@ export interface SideView {
 export interface BattleViewState {
   kind: BattleOpts['kind'];
   terrain: BattleOpts['terrain'] | null;
+  /** 마지막으로 던진 볼 */
+  ball: ItemId | null;
   trainer: TrainerInfo | null;
   trainerVisible: boolean;
   /** 상대가 가진 몬스터 전부 (남은 수 표시용) */
@@ -74,6 +77,7 @@ export class BattleSession {
     this.store = createStore<BattleViewState>({
       kind: opts.kind,
       terrain: opts.terrain ?? null,
+      ball: null,
       trainer: opts.trainer ?? null,
       trainerVisible: !!opts.trainer,
       enemyParty: opts.enemy,
@@ -127,6 +131,7 @@ export class BattleSession {
       this.side(id, { mon, hp: mon?.hp ?? 0, exp: mon?.exp ?? 0, visible: !!mon, anim: 'idle', form: null });
     },
     transform: (id, species) => this.side(id, { form: species }),
+    throwing: (ball) => this.store.set({ ball }),
     anim: async (id, kind, type) => {
       const sound: Partial<Record<AnimKind, Sfx>> = {
         enter: 'enter', attack: 'attack', hit: 'hit', hitBig: 'hitBig', faint: 'faint', statUp: 'statUp',

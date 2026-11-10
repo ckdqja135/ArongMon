@@ -10,7 +10,8 @@ import { G, PARTY_MAX } from '../../game/game';
 import { timeOfDay } from '../../game/world';
 import type { CharBase } from '../../gfx/charArt';
 import type { BattleTerrain, BattleTime } from '../../gfx/battleBg';
-import { battleBgCanvas, charCanvas, paint, platformCanvas } from '../../gfx/sprites';
+import type { BallId } from '../../gfx/ballArt';
+import { ballCanvas, battleBgCanvas, charCanvas, paint, platformCanvas, smallBallCanvas } from '../../gfx/sprites';
 import type { CharPalName } from '../../gfx/palettes';
 import { openBag } from '../screens/BagScreen';
 import { openParty } from '../screens/PartyScreen';
@@ -26,7 +27,7 @@ export function BattleScreen({ session }: { session: BattleSession }) {
     <div className={`battle${s.outro ? ' outro' : ''}${quake ? ' quake' : ''}`}>
       <Backdrop terrain={terrain} time={battleTime()} />
       {s.trainer && s.trainerVisible && <TrainerSprite base={s.trainer.sprite.base} pal={s.trainer.sprite.pal as CharPalName} />}
-      <BattlerSprite side={enemy} view="front" className="enemy-sprite" />
+      <BattlerSprite side={enemy} view="front" className="enemy-sprite" ball={(s.ball ?? 'capsule') as BallId} />
       <BattlerSprite side={player} view="back" className="player-sprite" />
       {enemy.visible && enemy.mon && <EnemyHud side={enemy} wild={s.kind === 'wild'} />}
       {enemy.visible && enemy.mon && s.kind === 'trainer' && <PartyBalls party={s.enemyParty} className="enemy-balls" />}
@@ -80,7 +81,7 @@ function Backdrop({ terrain, time }: { terrain: BattleTerrain; time: BattleTime 
   );
 }
 
-function BattlerSprite({ side, view, className }: { side: SideView; view: 'front' | 'back'; className: string }) {
+function BattlerSprite({ side, view, className, ball = 'capsule' }: { side: SideView; view: 'front' | 'back'; className: string; ball?: BallId }) {
   const m = side.mon;
   const ballAnim = ['throw', 'shake', 'caught'].includes(side.anim);
   return (
@@ -92,9 +93,20 @@ function BattlerSprite({ side, view, className }: { side: SideView; view: 'front
           {(side.anim === 'hit' || side.anim === 'hitBig') && side.fx && <span className={`fx fx-${side.fx}${side.anim === 'hitBig' ? ' big' : ''}`} />}
         </div>
       )}
-      {view === 'front' && ballAnim && <div key={side.animKey} className={`capsule-anim anim-${side.anim}`} />}
+      {view === 'front' && ballAnim && (
+        <div key={side.animKey} className={`ball-anim anim-${side.anim}`}>
+          <PixCanvas src={ballCanvas(ball)} className="ball-img" />
+        </div>
+      )}
     </>
   );
+}
+
+/** 미리 만든 도트 그림 하나를 그대로 보여 준다 */
+function PixCanvas({ src, className }: { src: HTMLCanvasElement; className: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => paint(ref.current, src), [src]);
+  return <canvas ref={ref} className={`pix ${className}`} />;
 }
 
 function TrainerSprite({ base, pal }: { base: CharBase; pal: CharPalName }) {
@@ -165,7 +177,7 @@ function PartyBalls({ party, className }: { party: Mon[]; className: string }) {
     <div className={`party-balls ${className}`}>
       {Array.from({ length: PARTY_MAX }, (_, i) => {
         const m = party[i];
-        return <span key={i} className={`ball ${!m ? 'none' : m.hp <= 0 ? 'fnt' : ''}`} />;
+        return m ? <PixCanvas key={i} src={smallBallCanvas(m.hp <= 0)} className="ball" /> : <span key={i} className="ball none" />;
       })}
     </div>
   );

@@ -31,6 +31,9 @@ body {
   font-smooth: never;
 }
 .pix { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+/* 고해상도 그림: 부드럽게, 기본 크기는 원래의 1/scale (다른 규칙이 크기를 정하면 그쪽이 이긴다) */
+.pix.hd { image-rendering: auto; }
+:where(.hd) { width: var(--w); height: var(--h); }
 .world-canvas { position: absolute; inset: 0; }
 .boot { color: #fff; padding: 80px 0; text-align: center; }
 .keys { font-family: Galmuri9; font-size: 10px; color: #9aa0c0; }
@@ -324,8 +327,7 @@ b { font-weight: normal; color: #2858a8; }
 /* 내 쪽은 HP 창 안, HP 숫자 왼쪽에 테두리 없이 */
 .player-balls { position: static; height: auto; padding: 0; background: none; border: none; }
 .enemy-balls { left: 0; top: 46px; border-left: none; border-top: none; border-radius: 0 0 8px 0; animation: slide-in-l 0.35s; }
-.ball { width: 7px; height: 7px; border-radius: 50%; border: 1px solid #303448; background: linear-gradient(#f05050 0 2px, #303448 2px 3px, #fafafa 3px); }
-.ball.fnt { background: linear-gradient(#8c8ea0 0 2px, #5c5e70 2px 3px, #c4c6d2 3px); border-color: #5c5e70; }
+.ball { width: 8px; height: 8px; }
 .ball.none { width: 3px; height: 3px; margin: 0 2px; border: none; background: #b4b8c8; }
 .battle-bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 48px; background: #384058; }
 .battle-text { left: 2px; right: 2px; }
@@ -417,19 +419,9 @@ b { font-weight: normal; color: #2858a8; }
 .anim-shiny .sparkle { position: absolute; left: 50%; top: 30%; color: #fff8a0; font-size: 18px; text-shadow: 0 0 4px #f8c040; animation: sparkle 0.8s; }
 @keyframes sparkle { from { transform: scale(0.2) rotate(0); opacity: 1; } to { transform: scale(2) rotate(90deg); opacity: 0; } }
 
-.capsule-anim {
-  position: absolute;
-  left: 182px;
-  top: 66px;
-  width: 14px;
-  height: 9px;
-  border-radius: 5px;
-  background: linear-gradient(90deg, #f0a030 0 50%, #fcfcfc 50%);
-  border: 1px solid #303040;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5);
-}
-.capsule-anim::after { content: ''; position: absolute; left: 5px; top: 2px; width: 2px; height: 3px; background: #303040; }
-.capsule-anim.anim-throw { animation: throw 0.8s ease-out; }
+.ball-anim { position: absolute; left: 180px; top: 62px; width: 16px; height: 16px; }
+.ball-img { width: 16px; height: 16px; }
+.ball-anim.anim-throw { animation: throw 0.8s ease-out; }
 @keyframes throw {
   0% { transform: translate(-150px, 50px) rotate(0); }
   50% { transform: translate(-60px, -40px) rotate(360deg); }
@@ -437,9 +429,9 @@ b { font-weight: normal; color: #2858a8; }
   88% { transform: translate(0, -6px); }
   100% { transform: translate(0, 0); }
 }
-.capsule-anim.anim-shake { animation: shake 0.65s; }
+.ball-anim.anim-shake { animation: shake 0.65s; }
 @keyframes shake { 20% { transform: rotate(-25deg); } 45% { transform: rotate(20deg); } 65% { transform: rotate(-8deg); } 80% { transform: none; } }
-.capsule-anim.anim-caught::before { content: '✦ ✦ ✦'; position: absolute; left: -10px; top: -14px; font-size: 8px; color: #f8e060; white-space: nowrap; animation: blink 0.2s steps(2) 3; }
+.ball-anim.anim-caught::before { content: '✦ ✦ ✦'; position: absolute; left: -10px; top: -14px; font-size: 8px; color: #f8e060; white-space: nowrap; animation: blink 0.2s steps(2) 3; }
 
 /* ── 화면 버튼 ── */
 .controls { display: none; width: min(100%, 480px); padding: 0 16px; justify-content: space-between; align-items: center; }

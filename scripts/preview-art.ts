@@ -4,8 +4,9 @@ import { MON_ART, monPalette } from '../src/data/monArt';
 import { renderBack, renderFront, renderIcon } from '../src/gfx/monsterArt';
 import { gridToRgba, type Grid, type Palette } from '../src/gfx/pixel';
 import { TILES, tileLayers } from '../src/gfx/tileArt';
-import { PAL, CHAR_PAL, ITEM_PAL } from '../src/gfx/palettes';
-import { charFrame, ITEM_POUCH, type CharBase, type Dir } from '../src/gfx/charArt';
+import { PAL, CHAR_PAL } from '../src/gfx/palettes';
+import { ballPalette, groundBallGrid } from '../src/gfx/ballArt';
+import { charFrame, type CharBase, type Dir } from '../src/gfx/charArt';
 import { Sheet } from './png';
 
 const outDir = process.argv[2] ?? 'scratch';
@@ -44,6 +45,6 @@ const chars = new Sheet(12 * 17 + 17, bases.length * 17, [200, 230, 180]);
 bases.forEach((b, bi) => {
   dirs.forEach((d, di) => ([0, 1, 2] as const).forEach((f) => put(chars, charFrame(b, d, f), charPals[bi], (di * 3 + f) * 17, bi * 17)));
 });
-put(chars, ITEM_POUCH, ITEM_PAL, 12 * 17, 0);
+put(chars, groundBallGrid(), ballPalette('capsule'), 12 * 17, 0);
 writeFileSync(`${outDir}/art-chars.png`, chars.png(5));
 console.log('ok', outDir);
