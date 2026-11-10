@@ -256,7 +256,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('여름: 하지만 체육관 승부는 별개야!\n작은 벌레의 큰 힘을 보여 줄게!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('metapod', 14), createMon('kakuna', 14), createMon('scyther', 16)],
+      enemy: [createMon('metapod', 12), createMon('kakuna', 12), createMon('scyther', 14)],
       trainer: { className: '관장', name: '여름', prize: 1600, sprite: { base: 'long', pal: 'green' }, lose: '여름: 우와, 완전히 졌어!' },
     });
     if (res.outcome !== 'win') return;
@@ -352,7 +352,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('다솜: 다들 내 몬스터가 귀엽다고만\n하는데... 귀여운 게 다가 아니야!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('clefairy', 18), createMon('tauros', 20)],
+      enemy: [createMon('clefairy', 16), createMon('tauros', 18)],
       trainer: { className: '관장', name: '다솜', prize: 2000, sprite: { base: 'long', pal: 'mom' }, lose: '다솜: 이럴 수가...!' },
     });
     if (res.outcome !== 'win') return;
@@ -407,7 +407,7 @@ export const SCRIPTS: Record<string, Script> = {
     sfx('exclaim');
     await say(`${josa(P(), '은/는')} 깨움방울을 울렸다!\n딸랑딸랑~`);
     await say('잠만보가 눈을 번쩍 떴다!\n잠을 깨워서 화가 났다!');
-    const res = await G.battle({ kind: 'wild', enemy: [createMon('snorlax', 25)] });
+    const res = await G.battle({ kind: 'wild', enemy: [createMon('snorlax', 23)] });
     if (res.outcome === 'lose') return;
     await G.world.fadeTo(1, 4);
     G.setFlag('snorlaxGone');
@@ -436,7 +436,7 @@ export const SCRIPTS: Record<string, Script> = {
     const evo = RIVAL_EVOLVED[G.save.rivalStarter ?? 'charmander'] ?? 'charmeleon';
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('gastly', 20), createMon('zubat', 20), createMon('magnemite', 18), createMon(evo, 22)],
+      enemy: [createMon('gastly', 18), createMon('zubat', 18), createMon('magnemite', 16), createMon(evo, 20)],
       trainer: { className: '라이벌', name: RIVAL(), prize: 1320, sprite: { base: 'cap', pal: 'rival' }, lose: `${RIVAL()}: ...쳇. 또 졌네.` },
     });
     if (res.outcome !== 'win') return;
@@ -518,7 +518,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('해솔: 네가 새들에게 선택받을 만한\n트레이너인지 시험해 보겠어!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('gastly', 21), createMon('haunter', 21), createMon('haunter', 23), createMon('gengar', 25)],
+      enemy: [createMon('gastly', 19), createMon('haunter', 19), createMon('haunter', 21), createMon('gengar', 23)],
       trainer: { className: '관장', name: '해솔', prize: 2500, sprite: { base: 'hat', pal: 'purple' }, lose: '해솔: ...보이지 않는 힘에서 졌어.' },
     });
     if (res.outcome !== 'win') return;
@@ -628,7 +628,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('무쇠: 폭포를 맞으며 단련한\n이 근육을 보아라! 간다!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('primeape', 27), createMon('poliwrath', 30)],
+      enemy: [createMon('primeape', 25), createMon('poliwrath', 28)],
       trainer: { className: '관장', name: '무쇠', prize: 3000, sprite: { base: 'bald', pal: 'brown' }, lose: '무쇠: 크으윽! 근육이 부족했다!' },
     });
     if (res.outcome !== 'win') return;
@@ -665,7 +665,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('시린: 하지만 관장으로서는 봐주지\n않을 거예요. 강철처럼 단단한\n제 몬스터들을 넘어 보세요!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('magnemite', 30), createMon('magnemite', 30), createMon('magneton', 35)],
+      enemy: [createMon('magnemite', 28), createMon('magnemite', 28), createMon('magneton', 33)],
       trainer: { className: '관장', name: '시린', prize: 3500, sprite: { base: 'long', pal: 'clerk' }, lose: '시린: ...멋진 승부였어요.' },
     });
     if (res.outcome !== 'win') return;
@@ -748,7 +748,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('흑월: 마침 잘됐다. 그 검은 강아지,\n이번에야말로 데려가 주지!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('weezing', 30), createMon('golbat', 30), createMon('gengar', 31)],
+      enemy: [createMon('weezing', 28), createMon('golbat', 28), createMon('gengar', 29)],
       trainer: { className: '로켓단 간부', name: '흑월', prize: 2400, sprite: { base: 'hat', pal: 'shadow' }, lose: '흑월: 이, 이럴 수가...!' },
     });
     if (res.outcome !== 'win') return;
@@ -789,7 +789,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('백설: 얼음은 견디는 힘을 가르쳐\n준다. 긴 겨울을 견딘 내 몬스터들을\n이겨 보거라!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('dewgong', 31), createMon('cloyster', 32), createMon('jynx', 34)],
+      enemy: [createMon('dewgong', 29), createMon('cloyster', 30), createMon('jynx', 32)],
       trainer: { className: '관장', name: '백설', prize: 3400, sprite: { base: 'old', pal: 'clerk' }, lose: '백설: 허허... 봄이 온 것 같구나.' },
     });
     if (res.outcome !== 'win') return;
@@ -849,7 +849,7 @@ export const SCRIPTS: Record<string, Script> = {
     const fin = RIVAL_FINAL[G.save.rivalStarter ?? 'charmander'] ?? 'charizard';
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('golbat', 33), createMon('magneton', 33), createMon('haunter', 34), createMon('kadabra', 34), createMon(fin, 36)],
+      enemy: [createMon('golbat', 31), createMon('magneton', 31), createMon('haunter', 32), createMon('kadabra', 32), createMon(fin, 34)],
       trainer: { className: '라이벌', name: RIVAL(), prize: 2160, sprite: { base: 'cap', pal: 'rival' }, lose: `${RIVAL()}: ...그래, 네가 더 강해.` },
     });
     if (res.outcome !== 'win') return;
@@ -872,7 +872,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('흑월: 기다리고 있었다, 꼬마.\n이번이 마지막이다!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('weezing', 32), createMon('golbat', 32), createMon('arbok', 33), createMon('gengar', 34)],
+      enemy: [createMon('weezing', 30), createMon('golbat', 30), createMon('arbok', 31), createMon('gengar', 32)],
       trainer: { className: '로켓단 간부', name: '흑월', prize: 3600, sprite: { base: 'hat', pal: 'shadow' }, lose: '흑월: 보, 보스... 죄송합니다...' },
     });
     if (res.outcome !== 'win') return;
@@ -938,7 +938,7 @@ export const SCRIPTS: Record<string, Script> = {
     // 보스전
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('persian', 32), createMon('dugtrio', 33), createMon('nidoqueen', 34), createMon('nidoking', 34), createMon('rhydon', 35)],
+      enemy: [createMon('persian', 30), createMon('dugtrio', 31), createMon('nidoqueen', 32), createMon('nidoking', 32), createMon('rhydon', 33)],
       trainer: { className: '로켓단 보스', name: '암영', prize: 8000, sprite: { base: 'hat', pal: 'shadow' }, lose: '암영: ...내가, 지다니.' },
     });
     if (res.outcome !== 'win') return;
@@ -1008,7 +1008,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say('단비: 로켓단을 쫓아냈다고?\n흥, 그래 봤자 내 용들한테는\n안 될걸!');
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('dragonair', 37), createMon('gyarados', 37), createMon('seadra', 38), createMon('dragonair', 40)],
+      enemy: [createMon('dragonair', 35), createMon('gyarados', 35), createMon('seadra', 36), createMon('dragonair', 38)],
       trainer: { className: '관장', name: '단비', prize: 4000, sprite: { base: 'long', pal: 'dragon' }, lose: '단비: 말도 안 돼... 내가 지다니!' },
     });
     if (res.outcome !== 'win') return;
@@ -1093,7 +1093,7 @@ export const SCRIPTS: Record<string, Script> = {
     const fin = RIVAL_FINAL[G.save.rivalStarter ?? 'charmander'] ?? 'charizard';
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('golbat', 38), createMon('magneton', 38), createMon('gengar', 39), createMon('alakazam', 39), createMon(fin, 41)],
+      enemy: [createMon('golbat', 36), createMon('magneton', 36), createMon('gengar', 37), createMon('alakazam', 37), createMon(fin, 39)],
       trainer: { className: '라이벌', name: RIVAL(), prize: 4100, sprite: { base: 'cap', pal: 'rival' }, lose: `${RIVAL()}: ...그래. 이게 너희의 힘이구나.` },
     });
     if (res.outcome !== 'win') return;
@@ -1107,22 +1107,22 @@ export const SCRIPTS: Record<string, Script> = {
   // ── 몬스터리그 ──
   e4psychic: () =>
     eliteFour('e4psychic', '수정', { base: 'long', pal: 'purple' },
-      [['slowbro', 42], ['jynx', 41], ['exeggutor', 41], ['hypno', 43], ['alakazam', 44]],
+      [['slowbro', 40], ['jynx', 39], ['exeggutor', 39], ['hypno', 41], ['alakazam', 42]],
       ['수정: 몬스터리그에 온 걸 환영해.\n나는 사천왕 수정. 에스퍼 타입을\n다루지.', '수정: ...그 강아지의 마음이 보여.\n온통 너로 가득하구나. 그 마음,\n시험해 볼게!'],
       '수정: 마음과 마음이 이어진 힘...\n내 예지로도 막을 수 없었어.'),
   e4poison: () =>
     eliteFour('e4poison', '청사', { base: 'hat', pal: 'green' },
-      [['arbok', 40], ['venomoth', 41], ['tentacruel', 42], ['muk', 42], ['golbat', 44]],
+      [['arbok', 38], ['venomoth', 39], ['tentacruel', 40], ['muk', 40], ['golbat', 42]],
       ['청사: 크크... 사천왕 청사다.\n독은 천천히, 확실하게 스며들지.', '청사: 너의 끈기, 독보다 질긴지\n보자!'],
       '청사: 독이... 통하지 않다니.'),
   e4fighting: () =>
     eliteFour('e4fighting', '태산', { base: 'bald', pal: 'brown' },
-      [['onix', 42], ['hitmonlee', 42], ['hitmonchan', 42], ['onix', 43], ['machamp', 46]],
+      [['onix', 40], ['hitmonlee', 40], ['hitmonchan', 40], ['onix', 41], ['machamp', 44]],
       ['태산: 사천왕 태산이다!\n단련, 또 단련! 그것뿐이다!', '태산: 작은 강아지라고 봐주지\n않는다! 간다!'],
       '태산: 크하하! 졌다! 좋은 단련이었다!'),
   e4dark: () =>
     eliteFour('e4dark', '밤비', { base: 'bun', pal: 'shadow' },
-      [['persian', 42], ['vileplume', 42], ['golbat', 44], ['gengar', 45], ['arbok', 47]],
+      [['persian', 40], ['vileplume', 40], ['golbat', 42], ['gengar', 43], ['arbok', 45]],
       ['밤비: 사천왕의 마지막, 밤비야.\n강한 몬스터, 약한 몬스터...\n그건 사람이 정한 거야.', '밤비: 진짜 트레이너라면 좋아하는\n몬스터로 이겨야지. 보여 줘!'],
       '밤비: ...그래, 좋아하는 몬스터와\n함께라면 이렇게 강해지는구나.'),
 
@@ -1139,7 +1139,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say(`진: 나는 이 리그의 챔피언, 진.\n드래곤과 함께 정상에 섰다.\n이제 ${josa(name, '과/와')} 너를 시험하겠다!`);
     const res = await G.battle({
       kind: 'trainer',
-      enemy: [createMon('gyarados', 44), createMon('dragonite', 47), createMon('dragonite', 47), createMon('aerodactyl', 46), createMon('charizard', 46), createMon('dragonite', 50)],
+      enemy: [createMon('gyarados', 42), createMon('dragonite', 45), createMon('dragonite', 45), createMon('aerodactyl', 44), createMon('charizard', 44), createMon('dragonite', 48)],
       trainer: { className: '챔피언', name: '진', prize: 10000, sprite: { base: 'cap', pal: 'dragon' }, lose: '진: ...훌륭하다. 정말 훌륭하다.' },
     });
     if (res.outcome !== 'win') {
@@ -1222,7 +1222,7 @@ export const SCRIPTS: Record<string, Script> = {
 async function electrode(n: number) {
   const w = G.world;
   await say('붐볼이 발생기에 붙어\n전기를 보내고 있다!');
-  const res = await G.battle({ kind: 'wild', enemy: [createMon('electrode', 26)] });
+  const res = await G.battle({ kind: 'wild', enemy: [createMon('electrode', 24)] });
   if (res.outcome === 'lose') return;
   await w.fadeTo(1, 6);
   G.setFlag(`electrode${n}`);
@@ -1307,7 +1307,7 @@ async function towerExecBattle() {
   await say(`흑월: 전설의 새보다 더 좋은 걸\n찾았군. ${josa(name, '을/를')} 넘겨라!`);
   const res = await G.battle({
     kind: 'trainer',
-    enemy: [createMon('koffing', 22), createMon('golbat', 22), createMon('haunter', 23)],
+    enemy: [createMon('koffing', 20), createMon('golbat', 20), createMon('haunter', 21)],
     trainer: { className: '로켓단 간부', name: '흑월', prize: 1500, sprite: { base: 'hat', pal: 'shadow' }, lose: '흑월: 큭... 꼬마 주제에!' },
   });
   if (res.outcome !== 'win') return;
