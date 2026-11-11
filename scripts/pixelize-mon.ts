@@ -335,6 +335,8 @@ const FRONT_OPTS: Record<string, Opts> = {
   rapidash: { size: 72 },
   // 고양이 몸이 길게 뻗어 얼굴이 작다: 크게 찍고 눈매를 살린다 (공식 일러스트로 찍는다)
   persian: { size: 66, feats: [{ test: (r, g, b) => r + g + b < 260, frac: 0.1, color: [40, 30, 30] }] },
+  // 입 안의 분홍색을 살린다 (공식 일러스트로 찍는다)
+  koffing: { rescue: 4, sat: 1.3 },
   // 설정을 바꿔 찍어 보기: TRY='{"키":{"size":70}}' npx tsx scripts/pixelize-mon.ts <원본폴더> 키
   ...(process.env.TRY ? JSON.parse(process.env.TRY) : {}),
   // 노란 가운데의 음영이 바퀴살 같은 선으로 찍힌다. 안쪽 선은 갈색 팔에만, 노란 가운데·보석 둘레에는 경계선
