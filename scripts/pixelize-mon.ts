@@ -189,7 +189,13 @@ function share(src: Img, w: number, h: number, test: (r: number, g: number, b: n
 }
 
 /** 원본에서 test에 맞는 무늬(눈동자·분홍 코처럼 작아서 묻히는 곳)가 칸의 frac 이상이면 그 칸을 color로 칠한다 */
-interface Feature { test: (r: number, g: number, b: number) => boolean; frac: number; color: [number, number, number] }
+interface Feature {
+  test: (r: number, g: number, b: number) => boolean;
+  frac: number;
+  color: [number, number, number];
+  /** 이 칸 안에서만 (줄인 그림의 x0, y0, x1, y1) */
+  box?: [number, number, number, number];
+}
 function features(src: Img, img: Img, list: Feature[]) {
   const sx = src.w / img.w, sy = src.h / img.h;
   for (let ty = 0; ty < img.h; ty++)
@@ -205,7 +211,8 @@ function features(src: Img, img: Img, list: Feature[]) {
           n++;
           list.forEach((f, k) => { if (f.test(src.data[i], src.data[i + 1], src.data[i + 2])) hit[k]++; });
         }
-      const k = list.findIndex((f, k) => n && hit[k] / n >= f.frac);
+      const inBox = (f: Feature) => !f.box || (tx >= f.box[0] && ty >= f.box[1] && tx <= f.box[2] && ty <= f.box[3]);
+      const k = list.findIndex((f, k) => n && inBox(f) && hit[k] / n >= f.frac);
       if (k >= 0) img.data.set(list[k].color, o);
     }
 }
@@ -335,8 +342,16 @@ const FRONT_OPTS: Record<string, Opts> = {
   rapidash: { size: 72 },
   // 고양이 몸이 길게 뻗어 얼굴이 작다: 크게 찍고 눈매를 살린다 (공식 일러스트로 찍는다)
   persian: { size: 66, feats: [{ test: (r, g, b) => r + g + b < 260, frac: 0.1, color: [40, 30, 30] }] },
-  // 입 안의 분홍색을 살린다 (공식 일러스트로 찍는다)
-  koffing: { rescue: 4, sat: 1.3 },
+  // 입 안의 분홍색과 눈동자를 살린다 (공식 일러스트로 찍는다)
+  koffing: {
+    rescue: 4,
+    sat: 1.3,
+    // 눈: 흰자위 위쪽의 까만 눈동자와 눈매
+    feats: [
+      { test: (r, g, b) => r + g + b < 250, frac: 0.12, color: [36, 28, 44], box: [18, 11, 41, 19] },
+      { test: (r, g, b) => r > 228 && g > 228 && b > 228, frac: 0.4, color: [255, 255, 255], box: [18, 11, 41, 19] },
+    ],
+  },
   // 설정을 바꿔 찍어 보기: TRY='{"키":{"size":70}}' npx tsx scripts/pixelize-mon.ts <원본폴더> 키
   ...(process.env.TRY ? JSON.parse(process.env.TRY) : {}),
   // 노란 가운데의 음영이 바퀴살 같은 선으로 찍힌다. 안쪽 선은 갈색 팔에만, 노란 가운데·보석 둘레에는 경계선
