@@ -288,6 +288,8 @@ interface Opts {
   ink?: number;
   /** 배틀 그림 크기를 키에서 정한 값 대신 이 값으로 (불꽃·날개가 넓게 퍼져 몸이 작아지는 그림) */
   size?: number;
+  /** 마지막에 손으로 찍는 점 (x, y, 색). 'up'이면 바로 위 칸의 색을 따른다 */
+  patch?: [number, number, [number, number, number] | 'up'][];
   /** 작아서 묻히는 무늬를 원본에서 찾아 칠한다 */
   feats?: Feature[];
   /** 색이 크게 다른 부분 사이에 경계선을 넣는다 (RGB 거리) */
@@ -298,7 +300,7 @@ interface Opts {
   sat?: number;
 }
 
-function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 128, rescue = 0, lines = true, linesOnly, feats, region, edges, ink = 0.28, sat = TUNE.sat }: Opts = {}): Img {
+function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 128, rescue = 0, lines = true, linesOnly, feats, region, edges, ink = 0.28, sat = TUNE.sat, patch }: Opts = {}): Img {
   const s = Math.min(size / ((src.w + src.h) / 2), cap / Math.max(src.w, src.h));
   const tw = Math.max(1, Math.round(src.w * s)), th = Math.max(1, Math.round(src.h * s));
   const img = shrink(src, tw, th);
@@ -315,6 +317,10 @@ function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 1
   if (edges) borders(src, sharp, edges);
   if (feats) features(src, sharp, feats);
   outline(sharp, ink);
+  for (const [x, y, c] of patch ?? []) {
+    const o = (y * sharp.w + x) * 4, u = ((y - 1) * sharp.w + x) * 4;
+    sharp.data.set(c === 'up' ? [sharp.data[u], sharp.data[u + 1], sharp.data[u + 2], 255] : [...c, 255], o);
+  }
   return sharp;
 }
 
@@ -336,6 +342,9 @@ const fieldTarget = (img: Img, height: number) => Math.min(24, Math.round(fieldS
 /** 필드 그림을 손으로 찍어 둔 종족 (다시 만들지 않는다): 원본 자세 그대로 줄이면 앙상해지는 녀석들 */
 const HAND_FIELD = new Set(['raichu']);
 
+/** 손으로 찍는 눈동자 색 */
+const K: [number, number, number] = [20, 16, 28];
+
 /** 종족마다 따로 맞춘 배틀 그림 설정 */
 const FRONT_OPTS: Record<string, Opts> = {
   // 불꽃 갈기·꼬리가 넓게 퍼져 말 몸통과 뿔이 작아진다 (공식 일러스트로 찍는다)
@@ -351,6 +360,8 @@ const FRONT_OPTS: Record<string, Opts> = {
       { test: (r, g, b) => r + g + b < 250, frac: 0.07, color: [16, 12, 20], box: [18, 11, 41, 19] },
       { test: (r, g, b) => r > 228 && g > 228 && b > 228, frac: 0.4, color: [255, 255, 255], box: [18, 11, 41, 19] },
     ],
+    // 흰 눈의 안쪽(가운데 쪽)에 까만 눈동자
+    patch: [[23, 14, K], [23, 15, K], [34, 14, K], [34, 15, K]],
   },
   // 몸의 줄무늬가 원본에 이미 있어 안쪽 선을 더하면 지저분하다. 연보라색을 살린다 (공식 일러스트로 찍는다)
   muk: { lines: false, sat: 1.4, size: 70 },
@@ -358,10 +369,16 @@ const FRONT_OPTS: Record<string, Opts> = {
   jynx: {
     lines: false,
     rescue: 4,
-    // 흰 눈 속 까만 눈동자
     feats: [
       { test: (r, g, b) => r + g + b < 200, frac: 0.16, color: [20, 16, 28], box: [24, 8, 39, 13] },
       { test: (r, g, b) => r > 225 && g > 225 && b > 225, frac: 0.3, color: [255, 255, 255], box: [24, 8, 39, 13] },
+    ],
+    // 흰 눈(3x3) 가운데 까만 눈동자, 진한 눈두덩, 눈 사이를 잇던 선은 지운다
+    patch: [
+      ...([26, 27, 28, 33, 34, 35].map((x) => [x, 8, K]) as [number, number, typeof K][]),
+      [27, 10, K], [27, 11, K], [34, 10, K], [34, 11, K],
+      [27, 12, K], [34, 12, K], [35, 12, K],
+      [29, 12, 'up'], [30, 12, 'up'], [31, 12, 'up'], [32, 12, 'up'],
     ],
   },
   // 설정을 바꿔 찍어 보기: TRY='{"키":{"size":70}}' npx tsx scripts/pixelize-mon.ts <원본폴더> 키

@@ -1,4 +1,5 @@
 // 데이터 검사: npm run check
+import { readFileSync, readdirSync } from 'node:fs';
 import { ITEMS, itemData } from '../src/data/items';
 import { MAPS } from '../src/data/maps';
 import { MON_ART, MON_COLORS } from '../src/data/monArt';
@@ -74,6 +75,49 @@ const gen1 = Object.values(SPECIES).filter((s) => s.no > 0);
 for (const s of gen1) if (!EGG_GROUPS[s.key]) err(`알 그룹 없음: ${s.key}`);
 if (gen1.length !== 151 || gen1.some((s, i) => s.no !== i + 1)) err(`1세대 도감 번호가 001~151이 아님 (${gen1.length}종)`);
 for (const k of Object.keys(MON_ART)) if (!SPECIES[k]) err(`종족 없는 그림: ${k}`);
+
+// 출입구로 들어선 자리에서 그 맵의 다른 출입구로 걸어갈 수 있는지 (계단에서 내렸는데 카운터 안에 갇히는 일)
+for (const m of Object.values(MAPS)) {
+  for (const w of m.warps) {
+    const t = MAPS[w.to];
+    if (!t) continue;
+    const h = t.tiles.length, wd = t.tiles[0].length;
+    const open = (x: number, y: number) => x >= 0 && y >= 0 && x < wd && y < h && !(TILES[t.tiles[y][x]]?.solid && !TILES[t.tiles[y][x]]?.water);
+    const seen = new Set<string>();
+    const stack: [number, number][] = [[w.tx, w.ty]];
+    while (stack.length) {
+      const [x, y] = stack.pop()!;
+      const k = `${x},${y}`;
+      if (seen.has(k) || !open(x, y)) continue;
+      seen.add(k);
+      // 출입구(계단·문) 칸을 밟으면 바로 다른 맵으로 가므로 그 너머로는 못 지나간다
+      if (seen.size > 1 && t.warps.some((x2) => x2.x === x && x2.y === y)) continue;
+      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    }
+    if (!seen.has(`${w.tx},${w.ty}`)) { err(`${m.id} → ${t.id}: 내리는 자리 (${w.tx},${w.ty})가 막힌 칸`); continue; }
+    const others = t.warps.filter((x) => x.to !== m.id);
+    const edge = [...seen].some((k) => { const [x, y] = k.split(',').map(Number); return x === 0 || y === 0 || x === wd - 1 || y === h - 1; }) && !!t.connections;
+    if (others.length && !edge && !others.some((x) => seen.has(`${x.x},${x.y}`)))
+      err(`${m.id} → ${t.id}: (${w.tx},${w.ty})에 내리면 다른 출입구로 갈 수 없다 (갇힘)`);
+  }
+}
+
+// 줄바꿈을 \\n으로 잘못 적으면 화면에 "\n" 글자가 그대로 나온다
+const walk = (v: unknown, where: string): void => {
+  if (typeof v === 'string') {
+    if (v.includes('\\n')) err(`${where}: 줄바꿈이 글자 그대로 나옴 (\\n) "${v.slice(0, 30)}"`);
+  } else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, `${where}.${k}`);
+};
+walk(MAPS, 'MAPS');
+walk(ITEMS, 'ITEMS');
+walk(SPECIES, 'SPECIES');
+walk(MOVES, 'MOVES');
+for (const f of readdirSync('src', { recursive: true }) as string[]) {
+  if (!/\.tsx?$/.test(f)) continue;
+  readFileSync(`src/${f}`, 'utf8').split('\n').forEach((line, i) => {
+    if (/(['`"])[^'`"]*\\\\n/.test(line)) err(`src/${f}:${i + 1}: 줄바꿈이 글자 그대로 나옴 (\\\\n)`);
+  });
+}
 
 console.log(errors.length ? errors.join('\n') : '데이터 이상 없음');
 console.log(`몬스터 ${Object.keys(SPECIES).length}종, 기술 ${Object.keys(MOVES).length}개, 맵 ${Object.keys(MAPS).length}개`);
