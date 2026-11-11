@@ -342,8 +342,8 @@ const fieldTarget = (img: Img, height: number) => Math.min(24, Math.round(fieldS
 /** 필드 그림을 손으로 찍어 둔 종족 (다시 만들지 않는다): 원본 자세 그대로 줄이면 앙상해지는 녀석들 */
 const HAND_FIELD = new Set(['raichu']);
 
-/** 손으로 찍는 눈동자 색 */
-const K: [number, number, number] = [20, 16, 28];
+/** 손으로 찍는 눈동자·눈두덩 색 (너무 까마면 눈이 부리부리해 보인다) */
+const K: [number, number, number] = [56, 44, 70];
 
 /** 종족마다 따로 맞춘 배틀 그림 설정 */
 const FRONT_OPTS: Record<string, Opts> = {
@@ -357,11 +357,11 @@ const FRONT_OPTS: Record<string, Opts> = {
     sat: 1.3,
     // 눈: 흰자위 위쪽의 까만 눈동자와 눈매
     feats: [
-      { test: (r, g, b) => r + g + b < 250, frac: 0.07, color: [16, 12, 20], box: [18, 11, 41, 19] },
+      { test: (r, g, b) => r + g + b < 250, frac: 0.12, color: [48, 38, 60], box: [18, 11, 41, 19] },
       { test: (r, g, b) => r > 228 && g > 228 && b > 228, frac: 0.4, color: [255, 255, 255], box: [18, 11, 41, 19] },
     ],
     // 흰 눈의 안쪽(가운데 쪽)에 까만 눈동자
-    patch: [[23, 14, K], [23, 15, K], [34, 14, K], [34, 15, K]],
+    patch: [[23, 14, K], [34, 14, K]],
   },
   // 몸의 줄무늬가 원본에 이미 있어 안쪽 선을 더하면 지저분하다. 연보라색을 살린다 (공식 일러스트로 찍는다)
   muk: { lines: false, sat: 1.4, size: 70 },
@@ -376,7 +376,7 @@ const FRONT_OPTS: Record<string, Opts> = {
     // 흰 눈(3x3) 가운데 까만 눈동자, 진한 눈두덩, 눈 사이를 잇던 선은 지운다
     patch: [
       ...([26, 27, 28, 33, 34, 35].map((x) => [x, 8, K]) as [number, number, typeof K][]),
-      [27, 10, K], [27, 11, K], [34, 10, K], [34, 11, K],
+      [27, 10, K], [34, 10, K],
       [27, 12, K], [34, 12, K], [35, 12, K],
       [29, 12, 'up'], [30, 12, 'up'], [31, 12, 'up'], [32, 12, 'up'],
     ],
