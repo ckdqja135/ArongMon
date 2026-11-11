@@ -74,8 +74,15 @@ function migrate(s: SaveData): SaveData {
   s.seen = [...new Set(s.seen.map(sp))];
   s.caught = [...new Set(s.caught.map(sp))];
   if (s.rivalStarter) s.rivalStarter = sp(s.rivalStarter);
+  // 기술머신이 생기기 전에 딴 배지: 관장이 주는 기술머신을 챙겨 준다
+  for (const b of s.badges) if (BADGE_TM[b] && !s.bag[BADGE_TM[b]]) s.bag[BADGE_TM[b]] = 1;
   return s;
 }
+
+/** 배지마다 관장이 함께 주는 기술머신 */
+const BADGE_TM: Record<string, ItemId> = {
+  feather: 'tm01', antenna: 'tm02', heart: 'tm03', spirit: 'tm04', fist: 'tm05', steel: 'tm06', glacier: 'tm07', dragon: 'tm08',
+};
 
 // ── 저장 슬롯 ──
 export const SLOTS = [1, 2, 3];

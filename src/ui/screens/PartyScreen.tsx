@@ -14,11 +14,13 @@ interface PartyOpts {
   /** 배틀에 나와 있는 몬스터 */
   active?: Mon | null;
   title?: string;
+  /** HP 숫자 대신 보여 줄 글 (기술머신: 배울 수 있다 / 없다) */
+  note?: (m: Mon) => { text: string; ok: boolean };
 }
 
 export const openParty = (o: PartyOpts) => openOverlay<number | null>((done) => <PartyScreen {...o} onDone={done} />);
 
-function PartyScreen({ mode, active, title, onDone }: PartyOpts & { onDone: (i: number | null) => void }) {
+function PartyScreen({ mode, active, title, note, onDone }: PartyOpts & { onDone: (i: number | null) => void }) {
   const party = G.save.party;
   const [i, setI] = useState(0);
   const [sub, setSub] = useState(false);
@@ -83,9 +85,13 @@ function PartyScreen({ mode, active, title, onDone }: PartyOpts & { onDone: (i: 
                   {m.hp <= 0 ? <span className="status fnt">기절</span> : m.status && <span className={`status ${m.status}`}>{STATUS_SHORT[m.status]}</span>}
                 </div>
                 <HpBar hp={m.hp} max={max} width={48} />
-                <div className="php">
-                  {m.hp}/{max}
-                </div>
+                {note ? (
+                  <div className={`php note${note(m).ok ? ' ok' : ''}`}>{note(m).text}</div>
+                ) : (
+                  <div className="php">
+                    {m.hp}/{max}
+                  </div>
+                )}
               </div>
             </div>
           );

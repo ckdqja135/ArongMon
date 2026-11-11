@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ITEMS, type ItemId } from '../../data/items';
+import { ITEMS, itemData, type ItemId } from '../../data/items';
 import { josa } from '../../engine/josa';
 import { G } from '../../game/game';
 import { ask, askQuantity, say, yesNo } from '../dialog';
@@ -22,13 +22,19 @@ async function buy(stock: ItemId[]) {
     const id = await openOverlay<ItemId | null>((done) => <ItemList ids={stock} price={(i) => ITEMS[i].price} onDone={done} />);
     if (!id) return;
     const it = ITEMS[id];
-    const max = Math.min(99, Math.floor(G.save.money / it.price));
-    if (max < 1) {
+    // 기술머신은 몇 번이든 쓸 수 있어서 하나만 판다
+    const isTM = !!itemData(id).tm;
+    if (isTM && G.save.bag[id]) {
+      await say('그 기술머신은 이미\n가지고 계시네요!');
+      continue;
+    }
+    const max = isTM ? 1 : Math.min(99, Math.floor(G.save.money / it.price));
+    if (max < 1 || G.save.money < it.price) {
       await say('돈이 모자랍니다.');
       continue;
     }
-    await say(`${josa(it.name, '을/를')}\n몇 개 사시겠습니까?`);
-    const n = await askQuantity(max, it.price);
+    if (!isTM) await say(`${josa(it.name, '을/를')}\n몇 개 사시겠습니까?`);
+    const n = isTM ? 1 : await askQuantity(max, it.price);
     if (!n) continue;
     if (!(await yesNo(`${it.name} ${n}개 해서\n${(n * it.price).toLocaleString()}원입니다. 괜찮으시겠어요?`))) continue;
     G.save.money -= n * it.price;

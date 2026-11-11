@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { canUseOn, useItemOn } from '../../battle/itemUse';
+import { monName, type Mon } from '../../battle/mon';
 import { RODS, type RodId } from '../../data/fishing';
 import { ITEMS, itemData, type ItemId, type Pocket } from '../../data/items';
+import { MOVES } from '../../data/moves';
+import { canLearnTM } from '../../data/tms';
 import { josa } from '../../engine/josa';
 import { useButtons } from '../../engine/input';
 import { G } from '../../game/game';
 import { openOverlay } from '../overlay';
+import { yesNo } from '../dialog';
 import { Frame, Menu } from '../widgets';
 import { openParty } from './PartyScreen';
 
@@ -18,6 +22,7 @@ export const openBag = (mode: BagMode, noBalls = false) => openOverlay<BagResult
 const POCKETS: { id: Pocket; name: string }[] = [
   { id: 'items', name: '도구' },
   { id: 'balls', name: '볼' },
+  { id: 'tm', name: '기술머신' },
   { id: 'key', name: '중요한 물건' },
 ];
 
@@ -33,8 +38,28 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
 
   const switchPocket = (b: string) => {
     if (b !== 'left' && b !== 'right') return;
-    setPocket((p) => (p + (b === 'left' ? 2 : 1)) % 3);
+    setPocket((p) => (p + (b === 'left' ? POCKETS.length - 1 : 1)) % POCKETS.length);
     setCur(0);
+  };
+
+  /** 기술머신: 배울 수 있는지 파티 화면에 보여 주고, 고른 포켓몬에게 가르친다 */
+  const teach = async (id: ItemId) => {
+    const move = itemData(id).tm!;
+    const name = MOVES[move].name;
+    const knows = (m: Mon) => m.moves.some((s) => s.id === move);
+    const target = await openParty({
+      mode: 'item',
+      title: `${josa(name, '을/를')}\n누구에게 가르칠까?`,
+      note: (m) => (knows(m) ? { text: '이미 안다', ok: false } : canLearnTM(m.species, move) ? { text: '배울 수 있다', ok: true } : { text: '배울 수 없다', ok: false }),
+    });
+    if (target === null) return;
+    const m = G.save.party[target];
+    if (knows(m)) setMsg(`${josa(monName(m), '은/는')} 이미\n${josa(name, '을/를')} 알고 있다!`);
+    else if (!canLearnTM(m.species, move)) setMsg(`${josa(monName(m), '은/는')}\n${josa(name, '을/를')} 배울 수 없다!`);
+    else if (await yesNo(`${monName(m)}에게\n${josa(name, '을/를')} 가르칠까?`)) {
+      await G.teachMove(m, move);
+      force((x) => x + 1);
+    }
   };
 
   const useOnMon = async (id: ItemId) => {
@@ -72,6 +97,7 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
       return;
     }
     if (it.pocket === 'items') await useOnMon(id);
+    else if (it.pocket === 'tm') await teach(id);
     else if (it.pocket === 'balls') setMsg('여기서는 쓸 수 없다.');
     else if (id === 'bicycle') setMsg((await G.toggleBike(true)) ?? '')
     else if (RODS.includes(id as RodId)) {
@@ -85,7 +111,8 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
     else setMsg(`${josa(G.player, '은/는')} ${josa(it.name, '을/를')}\n펼쳐 보았다.`);
   };
 
-  const options = mode === 'battle' ? ['사용', '취소'] : ITEMS[sel]?.pocket === 'key' ? ['사용', '취소'] : ['사용', '버리기', '취소'];
+  // 중요한 물건과 기술머신은 버릴 수 없다
+  const options = mode === 'battle' || ITEMS[sel]?.pocket === 'key' || ITEMS[sel]?.pocket === 'tm' ? ['사용', '취소'] : ['사용', '버리기', '취소'];
   const onSub = async (k: number) => {
     const id = sub!;
     const o = options[k];
@@ -107,7 +134,17 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
         {list.length ? (
           <Menu
             key={pocket}
-            items={[...list.map((id) => ({ label: <span className="item-row"><span className="grow">{ITEMS[id].name}</span>{ITEMS[id].pocket !== 'key' && <span>×{bag[id]}</span>}</span> })), '닫기']}
+            items={[
+              ...list.map((id) => ({
+                label: (
+                  <span className="item-row">
+                    <span className="grow">{ITEMS[id].name}</span>
+                    {itemData(id).tm ? <span className="small">{MOVES[itemData(id).tm!].name}</span> : ITEMS[id].pocket !== 'key' && <span>×{bag[id]}</span>}
+                  </span>
+                ),
+              })),
+              '닫기',
+            ]}
             initial={Math.min(cur, list.length)}
             onMove={setCur}
             onSelect={(k) => (k === list.length ? onDone(null) : setSub(list[k]))}

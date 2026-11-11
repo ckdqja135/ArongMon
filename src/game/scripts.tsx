@@ -1,7 +1,8 @@
 // 이야기 진행 스크립트. 지도 데이터의 script 이름으로 불린다.
 import { calcStats, createMon, monName, spec } from '../battle/mon';
 import type { RodId } from '../data/fishing';
-import { ITEMS, type ItemId } from '../data/items';
+import { ITEMS, itemData, type ItemId } from '../data/items';
+import { MOVES } from '../data/moves';
 import { exitOf } from '../data/maps';
 import { SPECIES } from '../data/species';
 import { josa } from '../engine/josa';
@@ -37,6 +38,7 @@ const MART_STOCK: Record<string, ItemId[]> = {
   hanbitMart: [
     'capsule', 'supercapsule', 'potion', 'superpotion', 'hyperpotion', 'antidote', 'parlyzheal', 'awakening', 'burnheal', 'iceheal',
     'fullheal', 'revive', 'firestone', 'waterstone', 'thunderstone', 'leafstone', 'moonstone',
+    'tm09', 'tm10', 'tm11', 'tm12', 'tm13', 'tm14', 'tm15', 'tm16', 'tm17', 'tm18', 'tm19', 'tm20',
   ],
 };
 
@@ -188,6 +190,7 @@ export const SCRIPTS: Record<string, Script> = {
     G.setFlag('beat_gymT2');
     await say('나래: 졌어! 이 배지는\n네 거야.');
     await say(`${josa(P(), '은/는')} 나래에게서\n깃털배지를 받았다!`);
+    await giveTM('tm01', '나래');
     await say('나래: 깃털배지가 있으면 몬스터가\n더 말을 잘 듣게 될 거야.');
     await say('나래: 북쪽 2번도로는 공사 중이지만\n곧 길이 열릴 거야. 힘내!');
   },
@@ -265,6 +268,7 @@ export const SCRIPTS: Record<string, Script> = {
     G.setFlag('beat_gym2T1');
     G.setFlag('beat_gym2T2');
     await say(`${josa(P(), '은/는')} 여름에게서\n더듬이배지를 받았다!`);
+    await giveTM('tm02', '여름');
     await say('여름: 더듬이배지가 있으면\n몬스터가 더 잘 따를 거야.');
     await say('여름: 이제 북쪽 단풍숲을 지나갈 수\n있어. 숲 너머에는 한빛시티가 있어!');
     await say('여름: 숲은 길이 꼬불꼬불하니까\n길을 잃지 않게 조심해!');
@@ -344,6 +348,7 @@ export const SCRIPTS: Record<string, Script> = {
       G.save.badges.push('heart');
       sfx('badge');
       await say(`${josa(P(), '은/는')} 다솜에게서\n하트배지를 받았다!`);
+      await giveTM('tm03', '다솜');
       await say('다솜: 하트배지가 있으면 몬스터가\n더 씩씩하게 싸워 줄 거야.');
       await giveWakebell();
       return;
@@ -527,6 +532,7 @@ export const SCRIPTS: Record<string, Script> = {
     G.setFlag('beat_gym4T1');
     G.setFlag('beat_gym4T2');
     await say(`${josa(P(), '은/는')} 해솔에게서\n혼령배지를 받았다!`);
+    await giveTM('tm04', '해솔');
     await say('해솔: 혼령배지가 있으면 몬스터가\n더 침착하게 싸울 거야.');
     await say('해솔: 서쪽 항구시티로 가는 길이\n열려 있을 거야. 거기 관장도\n만만치 않아.');
     await giveSurf();
@@ -637,6 +643,7 @@ export const SCRIPTS: Record<string, Script> = {
     G.setFlag('beat_gym5T1');
     G.setFlag('beat_gym5T2');
     await say(`${josa(P(), '은/는')} 무쇠에게서\n주먹배지를 받았다!`);
+    await giveTM('tm05', '무쇠');
     await say('무쇠: 주먹배지가 있으면 몬스터가\n더 힘차게 싸울 거다!');
     if (!G.flag('raichuHealed')) await say('무쇠: 항구 등대 일은 들었다.\n약국 영감님께 가 봐라!');
   },
@@ -673,6 +680,7 @@ export const SCRIPTS: Record<string, Script> = {
     sfx('badge');
     G.setFlag('beat_gym6T1');
     await say(`${josa(P(), '은/는')} 시린에게서\n강철배지를 받았다!`);
+    await giveTM('tm06', '시린');
     await say('시린: 강철배지가 있으면 몬스터가\n더 단단하게 버틸 거예요.');
     await say('시린: 로켓단이 실어 나르던\n몬스터들... 보라시티 동쪽\n호수로 가는 길에 단서가 있을\n거예요.');
   },
@@ -798,6 +806,7 @@ export const SCRIPTS: Record<string, Script> = {
     G.setFlag('beat_gym7T1');
     G.setFlag('beat_gym7T2');
     await say(`${josa(P(), '은/는')} 백설에게서\n얼음배지를 받았다!`);
+    await giveTM('tm07', '백설');
     await say('백설: 얼음배지가 있으면 몬스터가\n추위에도 지치지 않을 게다.');
     await say('백설: 진이라는 젊은이가 한빛시티로\n가는 걸 봤다. 너도 서두르거라.');
     G.setFlag('radioTakeover');
@@ -1000,6 +1009,7 @@ export const SCRIPTS: Record<string, Script> = {
       G.setFlag('beat_gym8T1');
       G.setFlag('beat_gym8T2');
       await say(`${josa(P(), '은/는')} 단비에게서\n용비늘배지를 받았다!`);
+      await giveTM('tm08', '단비');
       await say('단비: 배지 여덟 개가 모였네.\n이제 리그에 도전할 수 있어.');
       await say('단비: 리그로 가는 챔피언로드는\n새싹마을 동쪽 바다 건너에 있어.\n진 오빠도 거기서 기다릴 거야.');
       return;
@@ -1370,4 +1380,14 @@ async function rodFisher(rod: RodId, give: string[], after: string) {
   sfx('item');
   await say(`${josa(P(), '은/는')} ${josa(ITEMS[rod].name, '을/를')}\n받았다!`);
   await say('낚시꾼: 물을 마주 보고 A 버튼을\n누르거나, 가방에서 꺼내 쓰면 돼.');
+}
+
+/** 관장이 배지와 함께 기술머신을 준다 */
+async function giveTM(id: ItemId, leader: string) {
+  const move = MOVES[itemData(id).tm!].name;
+  await say(`${leader}: 이것도 받아. 내가 아끼는\n기술이 들어 있는 기술머신이야!`);
+  G.addItem(id);
+  sfx('item');
+  await say(`${josa(P(), '은/는')}\n${josa(ITEMS[id].name, '을/를')} 받았다!`);
+  await say(`${ITEMS[id].name}에는\n${josa(move, '이/가')} 들어 있다.`);
 }

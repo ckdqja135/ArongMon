@@ -405,6 +405,11 @@ class Game {
     chooseMove: (mon, options) => openOverlay<MoveId>((done) => <MoveChoice mon={mon} options={options} onDone={done} />),
   };
 
+  /** 기술머신으로 기술 하나를 가르친다 (기술이 꽉 찼으면 잊을 기술을 고른다) */
+  async teachMove(m: Mon, id: MoveId) {
+    await learnMoves(m, [id], this.learnIO);
+  }
+
   /** 이야기 속 사건으로 기술을 골라 배우게 한다 (후보 중 하나씩 n번) */
   async pickMovesFor(m: Mon, n: number) {
     await pickMoves(m, n, this.learnIO);

@@ -150,6 +150,9 @@ b { font-weight: normal; color: #2858a8; }
 .pname { font-size: 12px; line-height: 13px; }
 .plv { font-family: Galmuri9; font-size: 10px; line-height: 11px; display: flex; gap: 3px; }
 .php { font-family: Galmuri9; font-size: 10px; line-height: 10px; text-align: right; }
+/* 기술머신을 고를 때: HP 대신 배울 수 있는지 */
+.php.note { color: #9aa0b8; }
+.php.note.ok { color: #5cd068; }
 .party-hint { left: 2px; right: 100px; bottom: 2px; height: 42px; padding: 4px 8px; white-space: pre; }
 .submenu { right: 2px; bottom: 2px; width: 96px; padding: 3px 6px 3px 3px; }
 

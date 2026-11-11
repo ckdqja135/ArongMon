@@ -1,6 +1,7 @@
-import type { MajorStatus } from './moves';
+import { josa } from '../engine/josa';
+import { MOVES, type MajorStatus, type MoveId } from './moves';
 
-export type Pocket = 'items' | 'balls' | 'key';
+export type Pocket = 'items' | 'balls' | 'tm' | 'key';
 
 export interface ItemData {
   name: string;
@@ -16,7 +17,18 @@ export interface ItemData {
   ball?: number;
   /** 진화의 돌: 맞는 몬스터에게 쓰면 진화한다 */
   stone?: boolean;
+  /** 기술머신: 이 기술을 가르친다 (몇 번이든 쓸 수 있다) */
+  tm?: MoveId;
 }
+
+/** 기술머신. price가 0이면 관장에게서만 받을 수 있다 */
+const tm = (no: string, move: MoveId, price = 0): ItemData => ({
+  name: `기술머신${no}`,
+  price,
+  pocket: 'tm',
+  tm: move,
+  desc: `포켓몬에게 ${josa(MOVES[move].name, '을/를')}\n가르친다. 몇 번이든 쓸 수 있다.`,
+});
 
 export const ITEMS = {
   capsule: { name: '몬스터볼', price: 200, pocket: 'balls', ball: 1, desc: '야생 몬스터에게 던져서\n잡는 볼.' },
@@ -45,6 +57,28 @@ export const ITEMS = {
   oldrod: { name: '낡은낚싯대', price: 0, pocket: 'key', desc: '낡은 낚싯대. 물가에서 쓰면\n몬스터를 낚을 수 있다.' },
   goodrod: { name: '좋은낚싯대', price: 0, pocket: 'key', desc: '쓸 만한 낚싯대. 물가에서\n쓰면 더 센 몬스터가 낚인다.' },
   superrod: { name: '대단한낚싯대', price: 0, pocket: 'key', desc: '최고의 낚싯대. 물가에서\n쓰면 귀한 몬스터도 낚인다.' },
+  // 관장이 배지와 함께 준다
+  tm01: tm('01', 'wingbeat'),
+  tm02: tm('02', 'bugcharge'),
+  tm03: tm('03', 'slam'),
+  tm04: tm('04', 'shadowball'),
+  tm05: tm('05', 'punch'),
+  tm06: tm('06', 'irontail'),
+  tm07: tm('07', 'coldwind'),
+  tm08: tm('08', 'dragonbreath'),
+  // 한빛시티 마트에서 판다
+  tm09: tm('09', 'flamecannon', 5500),
+  tm10: tm('10', 'tsunami', 5500),
+  tm11: tm('11', 'discharge', 5500),
+  tm12: tm('12', 'frostbeam', 5500),
+  tm13: tm('13', 'petalstorm', 5000),
+  tm14: tm('14', 'mindblast', 5000),
+  tm15: tm('15', 'sludge', 4000),
+  tm16: tm('16', 'rockfall', 3500),
+  tm17: tm('17', 'crunch', 4000),
+  tm18: tm('18', 'bigquake', 6000),
+  tm19: tm('19', 'rest', 3000),
+  tm20: tm('20', 'quick', 2000),
   bicycle: { name: '자전거', price: 0, pocket: 'key', desc: '걷는 것보다 두 배 빠르다.\nSELECT 버튼으로 타고 내린다.' },
 } satisfies Record<string, ItemData>;
 
