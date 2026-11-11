@@ -8,6 +8,7 @@ import { say } from '../dialog';
 import { openOverlay } from '../overlay';
 import { BadgeImg, Frame, Menu } from '../widgets';
 import { openBag } from './BagScreen';
+import { openPhone } from './PhoneScreen';
 import { openDex } from './DexScreen';
 import { openParty } from './PartyScreen';
 import { openSlots } from './SlotScreen';
@@ -22,6 +23,15 @@ export async function openStartMenu() {
     if (G.flag('dex')) entries.push({ label: '도감', run: openDex });
     if (G.save.party.length) entries.push({ label: '포켓몬', run: () => openParty({ mode: 'field' }) });
     entries.push({ label: '가방', run: () => openBag('field') });
+    if (G.save.bag.pokegear)
+      entries.push({
+        label: '전화',
+        run: async () => {
+          // 고른 사람에게는 메뉴를 다 닫고 건다
+          const id = await openPhone();
+          if (id) G.afterMenu = () => G.phoneCall(id);
+        },
+      });
     entries.push({ label: G.player, run: openCard });
     entries.push({ label: '리포트', run: report });
     entries.push({ label: '설정', run: openOptions });

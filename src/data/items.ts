@@ -131,6 +131,7 @@ export const ITEMS = {
   tm18: tm('18', 'bigquake', 6000),
   tm19: tm('19', 'rest', 3000),
   tm20: tm('20', 'quick', 2000),
+  pokegear: { name: '포켓기어', price: 0, pocket: 'key', desc: '전화를 걸고 받을 수 있는 기계.\nSTART 메뉴의 전화로 쓴다.' },
   bicycle: { name: '자전거', price: 0, pocket: 'key', desc: '걷는 것보다 두 배 빠르다.\nSELECT 버튼으로 타고 내린다.' },
 } satisfies Record<string, ItemData>;
 

@@ -25,6 +25,10 @@ export interface SaveData {
   caught: string[];
   playSeconds: number;
   options: { textSpeed: 'slow' | 'mid' | 'fast'; sound?: boolean };
+  /** 포켓기어에 등록한 트레이너 (data/phone.ts의 id) */
+  phone?: string[];
+  /** 트레이너마다 마지막으로 싸웠을 때의 배지 수 (배지가 늘면 다시 승부하자고 전화한다) */
+  rematch?: Record<string, number>;
   /** 키우미집: 맡긴 포켓몬(맡길 때 레벨), 알이 생겼는지, 다음 알 확인까지 걸음 수 */
   daycare?: { mons: { mon: Mon; level: number }[]; egg: boolean; steps: number };
 }
@@ -76,6 +80,8 @@ function migrate(s: SaveData): SaveData {
   s.seen = [...new Set(s.seen.map(sp))];
   s.caught = [...new Set(s.caught.map(sp))];
   if (s.rivalStarter) s.rivalStarter = sp(s.rivalStarter);
+  // 포켓기어가 생기기 전에 시작한 기록: 엄마가 준 셈 친다
+  if (s.flags.talkedMom && !s.bag.pokegear) s.bag.pokegear = 1;
   // 기술머신이 생기기 전에 딴 배지: 관장이 주는 기술머신을 챙겨 준다
   for (const b of s.badges) if (BADGE_TM[b] && !s.bag[BADGE_TM[b]]) s.bag[BADGE_TM[b]] = 1;
   return s;

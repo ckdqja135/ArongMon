@@ -5,6 +5,7 @@ import {
   MAX_LEVEL, canFight, createMon, expForLevel, healMon, maxHp, monName, movesLearnedAt, picksAtLevel, setLevel, spec, type Mon,
 } from '../battle/mon';
 import { babyOf, breedChance, hatchSteps } from '../data/breeding';
+import { MOM_ARONG, MOM_HINTS, PHONE_TRAINERS, profRating } from '../data/phone';
 import { BattleSession } from '../battle/session';
 import { FISH, RODS, ROD_BITE, type RodId } from '../data/fishing';
 import { itemData, type ItemId } from '../data/items';
@@ -12,7 +13,7 @@ import { MAPS, type MapDef, type NpcDef } from '../data/maps';
 import type { MoveId } from '../data/moves';
 import { SPECIES } from '../data/species';
 import { josa } from '../engine/josa';
-import { rand, randInt, weighted } from '../engine/rng';
+import { pick, rand, randInt, weighted } from '../engine/rng';
 import { createStore } from '../engine/store';
 import { playMusic, setSoundEnabled, sfx } from '../engine/sound';
 import { ask, say, yesNo } from '../ui/dialog';
@@ -56,6 +57,8 @@ class Game {
   private lastOutdoor = '';
   /** 자전거 타는 중 */
   riding = false;
+  /** 마지막 전화 뒤로 걸은 걸음 수 */
+  private callSteps = 0;
   /** 메뉴를 다 닫은 뒤에 할 일 (가방에서 낚싯대를 꺼낸 경우 등) */
   afterMenu: (() => Promise<void>) | null = null;
   private bannerKey = 0;
@@ -275,8 +278,13 @@ class Game {
       return;
     }
     if (d.trainer) {
-      if (this.flag(`beat_${d.trainer.id}`)) await say(d.trainer.after);
-      else await this.trainerBattle(d);
+      const tr = d.trainer;
+      if (!this.flag(`beat_${tr.id}`)) await this.trainerBattle(d);
+      else if (this.flag(`rematch_${tr.id}`)) await this.rematchBattle(d);
+      else {
+        await say(tr.after);
+        await this.offerNumber(tr.id);
+      }
       return;
     }
     if (d.script) return SCRIPTS[d.script](npc);
@@ -297,20 +305,82 @@ class Game {
     await this.trainerBattle(npc.def);
   }
 
-  async trainerBattle(d: NpcDef) {
+  async trainerBattle(d: NpcDef, team?: Mon[]) {
     const tr = d.trainer!;
-    await say(tr.intro);
+    if (!team) await say(tr.intro);
     const sprite = d.sprite !== 'item' && 'base' in d.sprite ? d.sprite : { base: 'cap' as const, pal: 'player' as const };
     const res = await this.battle({
       kind: 'trainer',
-      enemy: tr.team.map(([sp, lv]) => createMon(sp, lv)),
+      enemy: team ?? tr.team.map(([sp, lv]) => createMon(sp, lv)),
       trainer: { className: tr.className, name: tr.name, prize: tr.prize, sprite, lose: tr.lose },
     });
-    if (res.outcome === 'win') {
+    if (res.outcome === 'win' && !team) {
       this.setFlag(`beat_${tr.id}`);
       if (tr.afterScript) await SCRIPTS[tr.afterScript]();
     }
     return res;
+  }
+
+  // ── 전화 (포켓기어) ──
+  /** 걸 수 있는 연락처: 엄마, 첫 포켓몬을 받았으면 느티 박사, 번호를 교환한 트레이너 */
+  phoneContacts() {
+    const list = [{ id: 'mom', name: '엄마', place: '새싹마을' }];
+    if (this.flag('starter')) list.push({ id: 'prof', name: '느티 박사', place: '느티 연구소' });
+    for (const t of PHONE_TRAINERS) if (this.save.phone?.includes(t.id)) list.push({ id: t.id, name: t.name, place: t.place });
+    return list;
+  }
+
+  /** 통화. incoming이면 상대가 건 전화 */
+  async phoneCall(id: string, incoming = false) {
+    const c = this.phoneContacts().find((x) => x.id === id)!;
+    sfx('ring');
+    await say(incoming ? `따르릉...♪\n${c.name}에게서 전화가 왔다!` : `따르릉...♪\n${c.name}에게 전화를 걸었다.`);
+    if (id === 'mom') {
+      await say(`엄마: ${josa(this.player, '아/야')}, 잘 지내니?`);
+      await say(`엄마: ${this.flag('champion') ? '챔피언이 됐다니 정말 장하다!\n가끔은 집에 와서 푹 쉬렴.' : MOM_HINTS[Math.min(MOM_HINTS.length - 1, this.save.badges.length)]}`);
+      await say(`엄마: ${pick(MOM_ARONG)}`);
+    } else if (id === 'prof') {
+      await say(`느티 박사: 오, ${this.player}! 도감은 어떠냐?`);
+      await say(`느티 박사: 만난 포켓몬 ${this.save.seen.length}마리,\n잡은 포켓몬 ${this.save.caught.length}마리라...`);
+      await say(`느티 박사: ${profRating(this.save.caught.length)}`);
+    } else {
+      const t = PHONE_TRAINERS.find((x) => x.id === id)!;
+      await say(`${t.name}: 여보세요? ${t.place}의\n${josa(t.name, '이야/야')}!`);
+      // 지난번 승부 뒤로 배지가 늘었으면 다시 승부하자고 한다
+      if (!this.flag(`rematch_${t.id}`) && (this.save.rematch?.[t.id] ?? 0) < this.save.badges.length) {
+        this.setFlag(`rematch_${t.id}`);
+        await say(`${t.name}: 나 그동안 많이 강해졌어!\n${t.place}에서 다시 승부하자!`);
+      } else await say(`${t.name}: ${pick(t.talk)}`);
+    }
+    await say('뚝!');
+  }
+
+  /** 이긴 트레이너가 전화번호를 교환하자고 한다 */
+  private async offerNumber(id: string) {
+    const t = PHONE_TRAINERS.find((x) => x.id === id);
+    if (!t || !this.save.bag.pokegear || this.save.phone?.includes(id)) return;
+    if (!(await yesNo(`${t.name}: 저기, 포켓기어 있지?\n전화번호 교환할래?`))) return;
+    (this.save.phone ??= []).push(id);
+    (this.save.rematch ??= {})[id] = this.save.badges.length;
+    sfx('item');
+    await say(`${t.name}의 전화번호를\n포켓기어에 등록했다!`);
+  }
+
+  /** 전화로 약속한 재대결: 배지 수에 맞춰 레벨이 오르고, 레벨이 되면 진화한 모습으로 */
+  private async rematchBattle(d: NpcDef) {
+    const tr = d.trainer!;
+    const lv = (l: number) => Math.max(l, 8 + this.save.badges.length * 5);
+    const evolved = (sp: string, level: number) => {
+      for (let e = SPECIES[sp].evolve; e && e.level <= level; e = SPECIES[sp].evolve) sp = e.to;
+      return sp;
+    };
+    await say(`${tr.name}: 기다리고 있었어!\n이번엔 안 질 거야!`);
+    const res = await this.trainerBattle(d, tr.team.map(([sp, l]) => createMon(evolved(sp, lv(l)), lv(l))));
+    if (res.outcome === 'win') {
+      this.setFlag(`rematch_${tr.id}`, false);
+      (this.save.rematch ??= {})[tr.id] = this.save.badges.length;
+      await say(`${tr.name}: 역시 강하구나...!\n더 강해지면 또 전화할게!`);
+    }
   }
 
   private grassStep() {
@@ -426,7 +496,13 @@ class Game {
       }
     }
     const egg = this.save.party.find((m) => m.egg !== undefined && --m.egg <= 0);
-    if (egg) void this.run(() => this.hatch(egg));
+    if (egg) return void this.run(() => this.hatch(egg));
+    // 밖을 걷다 보면 가끔 전화가 걸려 온다 (한 번 오면 300걸음은 조용히)
+    if (this.save.bag.pokegear && this.world.map.outdoor && ++this.callSteps > 300 && Math.random() < 1 / 400) {
+      this.callSteps = 0;
+      const c = pick(this.phoneContacts());
+      void this.run(() => this.phoneCall(c.id, true));
+    }
   }
 
   /** 맡긴 포켓몬이 지금 몇 레벨인지 (경험치로) */
