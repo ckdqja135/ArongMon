@@ -31,6 +31,8 @@ export function BattleScreen({ session }: { session: BattleSession }) {
       {s.trainer && s.trainerVisible && <TrainerSprite base={s.trainer.sprite.base} pal={s.trainer.sprite.pal as CharPalName} />}
       <BattlerSprite side={enemy} view="front" className="enemy-sprite" ball={(s.ball ?? 'capsule') as BallId} />
       <BattlerSprite side={player} view="back" className="player-sprite" />
+      {/* 특수 기술: 쏜 쪽에서 맞는 쪽으로 날아가는 기운 */}
+      {[player, enemy].map((v, k) => v.anim === 'shoot' && <span key={`p${k}${v.animKey}`} className={`proj ${k === 0 ? 'pe' : 'ep'} fx-${v.fx ?? 'normal'}`} />)}
       {enemy.visible && enemy.mon && <EnemyHud side={enemy} wild={s.kind === 'wild'} />}
       {enemy.visible && enemy.mon && s.kind === 'trainer' && <PartyBalls party={s.enemyParty} className="enemy-balls" />}
       {player.visible && player.mon && <PlayerHud side={player} />}
@@ -90,6 +92,10 @@ function Backdrop({ terrain, time }: { terrain: BattleTerrain; time: BattleTime 
   );
 }
 
+/** 둥실둥실 떠 있는 포켓몬: 비행·고스트 타입과 몸이 떠 있는 녀석들 */
+const FLOATERS = new Set(['koffing', 'weezing', 'magnemite', 'magneton', 'geodude', 'porygon', 'mew', 'venomoth', 'beedrill', 'voltorb', 'electrode']);
+const floats = (species: string) => FLOATERS.has(species) || SPECIES[species].types.some((t) => t === 'flying' || t === 'ghost');
+
 function BattlerSprite({ side, view, className, ball = 'capsule' }: { side: SideView; view: 'front' | 'back'; className: string; ball?: BallId }) {
   const m = side.mon;
   const ballAnim = ['throw', 'shake', 'caught'].includes(side.anim);
@@ -97,7 +103,20 @@ function BattlerSprite({ side, view, className, ball = 'capsule' }: { side: Side
     <>
       {m && side.visible && !ballAnim && (
         <div key={side.animKey} className={`battler ${className} anim-${side.anim}`}>
-          <MonImg species={side.form ?? m.species} view={view} shiny={isShiny(m)} />
+          {/* 가만히 있을 때도 숨을 쉬고(떠 있는 포켓몬은 둥실둥실), 상태 이상이면 그 모습이 보인다 */}
+          <MonImg
+            species={side.form ?? m.species}
+            view={view}
+            shiny={isShiny(m)}
+            className={`mon-idle ${floats(side.form ?? m.species) ? 'float' : 'breathe'}${m.status ? ` st-${m.status}` : ''}`}
+          />
+          {m.status === 'slp' && m.hp > 0 && (
+            <span className="zzz">
+              <i>z</i>
+              <i>z</i>
+              <i>Z</i>
+            </span>
+          )}
           {side.anim === 'shiny' && <span className="sparkle">✦</span>}
           {(side.anim === 'hit' || side.anim === 'hitBig') && side.fx && <span className={`fx fx-${side.fx}${side.anim === 'hitBig' ? ' big' : ''}`} />}
         </div>

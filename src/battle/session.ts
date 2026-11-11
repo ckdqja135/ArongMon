@@ -48,7 +48,7 @@ export interface BattleUIHooks {
 
 const ANIM_MS: Record<AnimKind, number> = {
   enter: 500, withdraw: 400, attack: 380, cast: 450, hit: 460, hitBig: 560, faint: 600, statUp: 600, statDown: 600, status: 450,
-  throw: 800, shake: 650, caught: 600, breakout: 450, shiny: 800, trainerOut: 450,
+  throw: 800, shake: 650, caught: 600, breakout: 450, shiny: 800, trainerOut: 450, shoot: 560, appear: 700,
 };
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

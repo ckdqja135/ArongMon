@@ -16,7 +16,11 @@ import {
 export type SideId = 0 | 1;
 export type AnimKind =
   | 'enter' | 'withdraw' | 'attack' | 'cast' | 'hit' | 'hitBig' | 'faint' | 'statUp' | 'statDown' | 'status'
-  | 'throw' | 'shake' | 'caught' | 'breakout' | 'shiny' | 'trainerOut';
+  | 'throw' | 'shake' | 'caught' | 'breakout' | 'shiny' | 'trainerOut'
+  /** 특수 기술: 기운을 모아 상대에게 쏜다 (type 색) */
+  | 'shoot'
+  /** 야생 포켓몬 등장: 검은 그림자에서 색이 돌아온다 */
+  | 'appear';
 
 export type PlayerAction =
   | { kind: 'fight'; move: number }
@@ -140,6 +144,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
     await sendOutEnemy(0);
   } else {
     io.setActive(1, act(E));
+    await io.anim(1, 'appear');
     await say(`앗! 야생 ${josa(monName(act(E)), '이/가')}\n튀어나왔다!`);
     ctx.onSeen(act(E).species);
   }
@@ -325,7 +330,8 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
     await say(`${label(A)}의\n${move.name}!`);
 
     const selfOnly = move.power === 0 && (!!move.heal || (!!move.stat && move.stat.every((s) => s.self)));
-    await io.anim(A.id, move.power > 0 ? 'attack' : 'cast');
+    // 물리 기술은 몸으로 부딪치고, 특수 기술은 기운을 쏘고, 변화 기술은 기운을 모은다
+    await io.anim(A.id, move.power === 0 ? 'cast' : isSpecial(move.type) ? 'shoot' : 'attack', move.type);
     if (!selfOnly && move.acc > 0) {
       const st = clamp(A.stages.acc - D.stages.eva, -6, 6);
       if (Math.random() * 100 >= move.acc * ACC_MULT[st]) {
