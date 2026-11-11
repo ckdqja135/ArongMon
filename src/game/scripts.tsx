@@ -686,6 +686,7 @@ export const SCRIPTS: Record<string, Script> = {
 
   async gymLeader5() {
     if (G.save.badges.includes('fist')) {
+      if (!G.save.bag.fly) return giveFly();
       await say('무쇠: 와하하! 좋은 승부였다!\n몸도 마음도 단련을 게을리\n하지 마라!');
       return;
     }
@@ -704,6 +705,7 @@ export const SCRIPTS: Record<string, Script> = {
     await say(`${josa(P(), '은/는')} 무쇠에게서\n주먹배지를 받았다!`);
     await giveTM('tm05', '무쇠');
     await say('무쇠: 주먹배지가 있으면 포켓몬이\n더 힘차게 싸울 거다!');
+    await giveFly();
     if (!G.flag('raichuHealed')) await say('무쇠: 항구 등대 일은 들었다.\n약국 영감님께 가 봐라!');
   },
 
@@ -1348,6 +1350,14 @@ async function eliteFour(flag: string, name: string, sprite: { base: CharBase; p
   await w.fadeTo(0.6, 8);
   G.setFlag(`${flag}Done`);
   await w.fadeTo(0, 8);
+}
+
+async function giveFly() {
+  await say('무쇠: 이것도 가져가라!\n바다 건너 먼 마을까지도\n단숨에 날아갈 수 있다!');
+  G.addItem('fly');
+  sfx('item');
+  await say(`${josa(P(), '은/는')} 공중날기를 받았다!`);
+  await say('무쇠: 바깥에서 포켓기어 지도를 열고\n가 본 마을을 고르면 된다!');
 }
 
 async function giveSurf() {

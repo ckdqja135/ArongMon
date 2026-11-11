@@ -29,6 +29,8 @@ export interface SaveData {
   phone?: string[];
   /** 트레이너마다 마지막으로 싸웠을 때의 배지 수 (배지가 늘면 다시 승부하자고 전화한다) */
   rematch?: Record<string, number>;
+  /** 가 본 마을 (공중날기로 갈 수 있는 곳) */
+  visited?: string[];
   /** 키우미집: 맡긴 포켓몬(맡길 때 레벨), 알이 생겼는지, 다음 알 확인까지 걸음 수 */
   daycare?: { mons: { mon: Mon; level: number }[]; egg: boolean; steps: number };
 }
@@ -84,8 +86,17 @@ function migrate(s: SaveData): SaveData {
   if (s.flags.talkedMom && !s.bag.pokegear) s.bag.pokegear = 1;
   // 기술머신이 생기기 전에 딴 배지: 관장이 주는 기술머신을 챙겨 준다
   for (const b of s.badges) if (BADGE_TM[b] && !s.bag[BADGE_TM[b]]) s.bag[BADGE_TM[b]] = 1;
+  // 공중날기가 생기기 전에 딴 주먹배지: 무쇠가 주는 공중날기를 챙겨 준다
+  if (s.badges.includes('fist') && !s.bag.fly) s.bag.fly = 1;
+  // 가 본 마을 기록이 생기기 전의 기록: 고향과 배지를 딴 마을은 가 본 셈 친다
+  if (!s.visited) s.visited = ['sprout', ...s.badges.map((b) => BADGE_TOWN[b]).filter(Boolean)];
   return s;
 }
+
+/** 배지를 주는 체육관이 있는 마을 */
+const BADGE_TOWN: Record<string, string> = {
+  feather: 'dew', antenna: 'danpung', heart: 'hanbit', spirit: 'bora', fist: 'island', steel: 'harbor', glacier: 'frost', dragon: 'blackthorn',
+};
 
 /** 배지마다 관장이 함께 주는 기술머신 */
 const BADGE_TM: Record<string, ItemId> = {

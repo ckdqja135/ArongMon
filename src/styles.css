@@ -549,6 +549,10 @@ b { font-weight: normal; color: #2858a8; }
 .cr-press { position: absolute; right: 8px; top: 6px; color: #8c88b0; animation: blink 1.2s steps(2) infinite; }
 
 /* ── 저장 슬롯 ── */
+.region .region-map { position: absolute; left: 8px; top: 24px; }
+.region .region-info { left: 140px; right: 6px; top: 24px; padding: 6px 8px; line-height: 16px; }
+.region .region-name { font-size: 12px; margin-bottom: 4px; }
+.region .region-fly { color: #c04030; }
 .phone .phone-list { left: 8px; right: 8px; top: 28px; bottom: 8px; padding: 4px 6px 4px 2px; }
 .phone .item-row { width: 220px; }
 .slots .slot-list { left: 8px; right: 8px; top: 28px; bottom: 8px; padding: 4px 6px 4px 2px; }

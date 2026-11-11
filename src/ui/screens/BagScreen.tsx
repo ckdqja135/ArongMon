@@ -11,6 +11,7 @@ import { G } from '../../game/game';
 import { openOverlay } from '../overlay';
 import { yesNo } from '../dialog';
 import { Frame, Menu } from '../widgets';
+import { openMap } from './MapScreen';
 import { openParty } from './PartyScreen';
 
 export type BagResult = { item: ItemId; target?: number } | null;
@@ -120,6 +121,14 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
       else {
         // 가방과 메뉴를 닫고 낚시한다
         G.afterMenu = () => G.fish(id as RodId);
+        onDone(null);
+      }
+    }
+    else if (id === 'fly') {
+      // 지도를 열어 마을을 고르면 가방과 메뉴를 닫고 날아간다
+      const town = await openMap();
+      if (town) {
+        G.afterMenu = () => G.flyTo(town);
         onDone(null);
       }
     }

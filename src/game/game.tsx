@@ -10,6 +10,7 @@ import { BattleSession } from '../battle/session';
 import { FISH, RODS, ROD_BITE, type RodId } from '../data/fishing';
 import { itemData, type ItemId } from '../data/items';
 import { MAPS, type MapDef, type NpcDef } from '../data/maps';
+import { FLY_SPOTS } from '../data/region';
 import type { MoveId } from '../data/moves';
 import { SPECIES } from '../data/species';
 import { josa } from '../engine/josa';
@@ -200,6 +201,24 @@ class Game {
       this.lastOutdoor = '';
       this.riding = false;
     }
+    // 공중날기로 갈 수 있게 가 본 마을을 적어 둔다
+    if (FLY_SPOTS[map.id] && !this.save.visited?.includes(map.id)) (this.save.visited ??= []).push(map.id);
+  }
+
+  /** 공중날기를 쓸 수 있는지: 공중날기가 있고, 싸울 수 있는 포켓몬이 있고, 바깥에 있을 때 */
+  canFly() {
+    return !!this.save.bag.fly && this.save.party.some(canFight) && !!this.world.map.outdoor;
+  }
+
+  /** 공중날기: 날개로 나는 포켓몬(비행 타입, 갸라도스 같은 물 타입은 뒤로)이 있으면 그 녀석과, 없으면 앞장선 포켓몬과 가 본 마을로 날아간다 */
+  async flyTo(town: string) {
+    const spot = FLY_SPOTS[town];
+    const fliers = this.save.party.filter((p) => canFight(p) && spec(p).types.includes('flying'));
+    const m = fliers.find((p) => !spec(p).types.includes('water')) ?? fliers[0] ?? this.save.party.find(canFight)!;
+    await say(`${josa(monName(m), '과/와')} 함께\n하늘을 날았다!`);
+    sfx('fly');
+    this.riding = false;
+    await this.world.warpTo(town, spot.x, spot.y, 'down');
   }
 
   /** 물을 마주 보고 A: 낚싯대가 있으면 낚시, 파도타기가 있으면 물 위로. 물 위에서는 가방에서 낚싯대를 꺼내 쓴다 */

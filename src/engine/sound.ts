@@ -94,7 +94,7 @@ function noise(out: AudioNode, t: number, dur: number, vol: number, filter: Biqu
 export type Sfx =
   | 'cursor' | 'select' | 'cancel' | 'bump' | 'door' | 'jump' | 'exclaim' | 'item'
   | 'attack' | 'hit' | 'hitBig' | 'faint' | 'statUp' | 'statDown' | 'status' | 'enter'
-  | 'throw' | 'shake' | 'caught' | 'levelup' | 'heal' | 'badge' | 'evolve' | 'bike' | 'ring';
+  | 'throw' | 'shake' | 'caught' | 'levelup' | 'heal' | 'badge' | 'evolve' | 'bike' | 'ring' | 'fly';
 
 export function sfx(name: Sfx) {
   if (!ctx || !settings.sound) return;
@@ -127,6 +127,7 @@ export function sfx(name: Sfx) {
     case 'badge': return arp(['C5', 'E5', 'G5', 'C6', 'r', 'G5', 'C6', 'E6'].map((n) => (n === 'r' ? 'C0' : n)), 0.11);
     case 'evolve': return arp(['C5', 'G5', 'E6', 'C6', 'G6', 'E7'], 0.09, 'triangle', 0.3);
     case 'bike': return arp(['G5', 'D6'], 0.06, 'pulse', 0.12);
+    case 'fly': noise(o, t, 0.5, 0.3, 'bandpass', 900); return tone(o, 'triangle', 240, t, 0.5, 0.18, 980);
     case 'ring': return arp(['E6', 'C6', 'E6', 'C6', 'E6', 'C6', 'C0', 'E6', 'C6', 'E6', 'C6', 'E6', 'C6'], 0.05, 'pulse', 0.12);
   }
 }

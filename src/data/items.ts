@@ -105,6 +105,7 @@ export const ITEMS = {
   dexdevice: { name: '포켓몬도감', price: 0, pocket: 'key', desc: '만난 포켓몬을 기록하는\n하이테크 도감.' },
   wakebell: { name: '깨움방울', price: 0, pocket: 'key', desc: '맑은 소리로 잠든 포켓몬을\n깨운다.' },
   surf: { name: '파도타기', price: 0, pocket: 'key', desc: '포켓몬과 함께 물 위를 건넌다.\n물가에서 A 버튼으로 쓴다.' },
+  fly: { name: '공중날기', price: 0, pocket: 'key', desc: '포켓몬과 함께 가 본 마을로\n날아간다. 바깥에서 지도를 열어\n마을을 고른다.' },
   secretpotion: { name: '비상약', price: 0, pocket: 'key', desc: '섬도시 약국의 귀한 약.\n아픈 포켓몬이 기운을 차린다.' },
   oldrod: { name: '낡은낚싯대', price: 0, pocket: 'key', desc: '낡은 낚싯대. 물가에서 쓰면\n포켓몬을 낚을 수 있다.' },
   goodrod: { name: '좋은낚싯대', price: 0, pocket: 'key', desc: '쓸 만한 낚싯대. 물가에서\n쓰면 더 센 포켓몬이 낚인다.' },

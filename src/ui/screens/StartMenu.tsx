@@ -8,6 +8,7 @@ import { say } from '../dialog';
 import { openOverlay } from '../overlay';
 import { BadgeImg, Frame, Menu } from '../widgets';
 import { openBag } from './BagScreen';
+import { openMap } from './MapScreen';
 import { openPhone } from './PhoneScreen';
 import { openDex } from './DexScreen';
 import { openParty } from './PartyScreen';
@@ -30,6 +31,15 @@ export async function openStartMenu() {
           // 고른 사람에게는 메뉴를 다 닫고 건다
           const id = await openPhone();
           if (id) G.afterMenu = () => G.phoneCall(id);
+        },
+      });
+    if (G.save.bag.pokegear)
+      entries.push({
+        label: '지도',
+        run: async () => {
+          // 공중날기로 고른 마을이 있으면 메뉴를 다 닫고 날아간다
+          const town = await openMap();
+          if (town) G.afterMenu = () => G.flyTo(town);
         },
       });
     entries.push({ label: G.player, run: openCard });
