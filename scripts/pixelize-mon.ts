@@ -169,6 +169,24 @@ function innerLines(img: Img, frac: Float32Array, minFrac: number) {
   for (const o of marks) for (let c = 0; c < 3; c++) data[o + c] *= 0.55;
 }
 
+/** 줄인 그림의 칸마다 원본에서 test에 맞는 픽셀이 얼마나 섞였는지 */
+function share(src: Img, w: number, h: number, test: (r: number, g: number, b: number) => boolean): Float32Array {
+  const out = new Float32Array(w * h), sx = src.w / w, sy = src.h / h;
+  for (let ty = 0; ty < h; ty++)
+    for (let tx = 0; tx < w; tx++) {
+      let hit = 0, n = 0;
+      for (let y = Math.floor(ty * sy); y < Math.min(src.h, Math.ceil((ty + 1) * sy)); y++)
+        for (let x = Math.floor(tx * sx); x < Math.min(src.w, Math.ceil((tx + 1) * sx)); x++) {
+          const i = (y * src.w + x) * 4;
+          if (src.data[i + 3] < 128) continue;
+          n++;
+          if (test(src.data[i], src.data[i + 1], src.data[i + 2])) hit++;
+        }
+      out[ty * w + tx] = n ? hit / n : 0;
+    }
+  return out;
+}
+
 /** 원본에서 test에 맞는 무늬(눈동자·분홍 코처럼 작아서 묻히는 곳)가 칸의 frac 이상이면 그 칸을 color로 칠한다 */
 interface Feature { test: (r: number, g: number, b: number) => boolean; frac: number; color: [number, number, number] }
 function features(src: Img, img: Img, list: Feature[]) {
@@ -236,14 +254,14 @@ function regionLines(img: Img, dist: number) {
 }
 
 /** 투명한 곳과 닿은 가장자리를 진하게 칠해 도트 외곽선을 만든다 */
-function outline(img: Img) {
+function outline(img: Img, keep = 0.28) {
   const { w, h, data } = img;
   const solid = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && data[(y * w + x) * 4 + 3] > 0;
   const edge: number[] = [];
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++)
       if (solid(x, y) && (!solid(x + 1, y) || !solid(x - 1, y) || !solid(x, y + 1) || !solid(x, y - 1))) edge.push((y * w + x) * 4);
-  for (const o of edge) for (let c = 0; c < 3; c++) data[o + c] = data[o + c] * 0.28 + 16 * 0.72;
+  for (const o of edge) for (let c = 0; c < 3; c++) data[o + c] = data[o + c] * keep + 16 * (1 - keep);
 }
 
 /** size는 가로·세로 평균의 목표 길이 (팔을 벌린 꼬마돌처럼 납작한 그림도 몸이 작아지지 않게), cap은 칸 크기 */
@@ -256,6 +274,10 @@ interface Opts {
   rescue?: number;
   /** 안쪽 선을 넣을지 (매끈한 몸에 잔주름처럼 생기는 그림은 끈다) */
   lines?: boolean;
+  /** 안쪽 선을 이 부분에만 (별가사리의 갈색 팔처럼) */
+  linesOnly?: (r: number, g: number, b: number) => boolean;
+  /** 외곽선에 원래 색을 얼마나 남길지 (작을수록 검고 진하다) */
+  ink?: number;
   /** 작아서 묻히는 무늬를 원본에서 찾아 칠한다 */
   feats?: Feature[];
   /** 색이 크게 다른 부분 사이에 경계선을 넣는다 (RGB 거리) */
@@ -266,7 +288,7 @@ interface Opts {
   sat?: number;
 }
 
-function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 128, rescue = 0, lines = true, feats, region, edges, sat = TUNE.sat }: Opts = {}): Img {
+function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 128, rescue = 0, lines = true, linesOnly, feats, region, edges, ink = 0.28, sat = TUNE.sat }: Opts = {}): Img {
   const s = Math.min(size / ((src.w + src.h) / 2), cap / Math.max(src.w, src.h));
   const tw = Math.max(1, Math.round(src.w * s)), th = Math.max(1, Math.round(src.h * s));
   const img = shrink(src, tw, th);
@@ -274,11 +296,15 @@ function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 1
   const sharp = sharpen(img, size >= 40 ? 0.45 : 0.25);
   quantize(sharp, colors, cut, rescue);
   // 작은 그림(아이콘·필드)은 안쪽 선을 넣으면 뭉개지므로 큰 그림에만
-  if (size >= 40 && lines) innerLines(sharp, edgeFraction(src, tw, th, TUNE.edge), TUNE.frac);
+  if (size >= 40 && lines) {
+    const frac = edgeFraction(src, tw, th, TUNE.edge);
+    if (linesOnly) share(src, tw, th, linesOnly).forEach((v, i) => { if (v < 0.6) frac[i] = 0; });
+    innerLines(sharp, frac, TUNE.frac);
+  }
   if (region) regionLines(sharp, region);
   if (edges) borders(src, sharp, edges);
   if (feats) features(src, sharp, feats);
-  outline(sharp);
+  outline(sharp, ink);
   return sharp;
 }
 
@@ -302,9 +328,10 @@ const HAND_FIELD = new Set(['raichu']);
 
 /** 종족마다 따로 맞춘 배틀 그림 설정 */
 const FRONT_OPTS: Record<string, Opts> = {
-  // 매끈한 몸의 음영이 바퀴살 같은 선으로 찍힌다. 대신 원본에서 노란 가운데·보석과 갈색 팔이 맞닿는 곳에만 경계선
+  // 노란 가운데의 음영이 바퀴살 같은 선으로 찍힌다. 안쪽 선은 갈색 팔에만, 노란 가운데·보석 둘레에는 경계선
   staryu: {
-    lines: false,
+    linesOnly: (r, g, b) => r > 80 && g < 0.7 * r && b < 100,
+    ink: 0.12,
     edges: [
       // 노란 가운데 | 갈색 팔
       { a: (r, g, b) => r > 180 && g > 0.78 * r && b < 150, b: (r, g, b) => r > 80 && g < 0.7 * r && b < 100, frac: 0.06 },
