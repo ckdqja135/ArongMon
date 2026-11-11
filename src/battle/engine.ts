@@ -10,7 +10,7 @@ import { chance, pick, rand, randInt } from '../engine/rng';
 import { useItemOn } from './itemUse';
 import { learnMoves, pickMoves } from './learn';
 import {
-  STAT_NAME, calcStats, expForLevel, monName, movesLearnedAt, picksAtLevel, setLevel, spec, type Mon, type MoveSlot, type Stats,
+  STAT_NAME, calcStats, canFight, expForLevel, monName, movesLearnedAt, picksAtLevel, setLevel, spec, type Mon, type MoveSlot, type Stats,
 } from './mon';
 
 export type SideId = 0 | 1;
@@ -105,7 +105,7 @@ const freshStages = (): Record<StatKey, number> => ({ atk: 0, def: 0, spa: 0, sp
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Promise<BattleResult> {
-  const P: Side = { id: 0, party: ctx.party, active: Math.max(0, ctx.party.findIndex((m) => m.hp > 0)), stages: freshStages(), confused: 0, flinch: false, startled: 0, form: null };
+  const P: Side = { id: 0, party: ctx.party, active: Math.max(0, ctx.party.findIndex(canFight)), stages: freshStages(), confused: 0, flinch: false, startled: 0, form: null };
   const E: Side = { id: 1, party: o.enemy, active: 0, stages: freshStages(), confused: 0, flinch: false, startled: 0, form: null };
   const wild = o.kind === 'wild';
   const leveled = new Set<Mon>();
@@ -661,7 +661,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
         }
         return result('win');
       }
-      if (act(P).hp > 0 && P.party.filter((m) => m.hp > 0).length > 1) {
+      if (act(P).hp > 0 && P.party.filter(canFight).length > 1) {
         const nextName = monName(E.party[next]);
         if (await io.yesNo(`${josa(o.trainer!.name, '은/는')} ${josa(nextName, '을/를')}\n내보내려 한다. 교체할까?`)) {
           const idx = await io.chooseSwitch(false);
@@ -675,7 +675,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
       await io.anim(0, 'faint');
       await say(`${lj(P, '은/는')}\n쓰러졌다!`);
       participants.delete(P.active);
-      if (!P.party.some((m) => m.hp > 0)) {
+      if (!P.party.some(canFight)) {
         await say(`${ctx.playerName}에게는 싸울 수 있는\n몬스터가 없다!`);
         await say(`${josa(ctx.playerName, '은/는')}\n눈앞이 캄캄해졌다!`);
         return result('lose');
@@ -698,7 +698,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
     const alive = [...participants].filter((i) => P.party[i]?.hp > 0);
     if (!alive.length) return;
     // 학습장치를 지닌 포켓몬은 배틀에 안 나갔어도 절반을 받는다
-    const sharers = P.party.map((m, i) => i).filter((i) => !alive.includes(i) && P.party[i].hp > 0 && P.party[i].item && itemData(P.party[i].item!).hold?.kind === 'expshare');
+    const sharers = P.party.map((m, i) => i).filter((i) => !alive.includes(i) && canFight(P.party[i]) && P.party[i].item && itemData(P.party[i].item!).hold?.kind === 'expshare');
     const sp = spec(defeated);
     for (const i of [...alive, ...sharers]) {
       const m = P.party[i];

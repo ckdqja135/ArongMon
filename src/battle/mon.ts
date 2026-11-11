@@ -28,13 +28,17 @@ export interface Mon {
   metMap?: string;
   /** 지닌 도구 */
   item?: ItemId;
+  /** 알이면 깨어날 때까지 남은 걸음 수 (알은 배틀에 나가지 않는다) */
+  egg?: number;
 }
 
 export const MAX_MOVES = 4;
 export const MAX_LEVEL = 100;
 
 export const spec = (m: Mon): SpeciesData => SPECIES[m.species];
-export const monName = (m: Mon) => m.nickname ?? spec(m).name;
+export const monName = (m: Mon) => (m.egg !== undefined ? '알' : (m.nickname ?? spec(m).name));
+/** 배틀에 나갈 수 있는지 (쓰러지지 않았고 알이 아니다) */
+export const canFight = (m: Mon) => m.hp > 0 && m.egg === undefined;
 
 export function expForLevel(g: Growth, n: number): number {
   if (n <= 1) return 0;

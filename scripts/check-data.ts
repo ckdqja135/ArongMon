@@ -3,6 +3,7 @@ import { ITEMS, itemData } from '../src/data/items';
 import { MAPS } from '../src/data/maps';
 import { MON_ART, MON_COLORS } from '../src/data/monArt';
 import { MOVES } from '../src/data/moves';
+import { EGG_GROUPS } from '../src/data/breeding';
 import { FISH } from '../src/data/fishing';
 import { SPECIES } from '../src/data/species';
 import { TILES } from '../src/gfx/tileArt';
@@ -70,6 +71,7 @@ for (const [spot, rods] of Object.entries(FISH))
   for (const [rod, table] of Object.entries(rods)) for (const e of table) if (!SPECIES[e.species]) err(`낚시 ${spot}/${rod}: 몬스터 없음 ${e.species}`);
 
 const gen1 = Object.values(SPECIES).filter((s) => s.no > 0);
+for (const s of gen1) if (!EGG_GROUPS[s.key]) err(`알 그룹 없음: ${s.key}`);
 if (gen1.length !== 151 || gen1.some((s, i) => s.no !== i + 1)) err(`1세대 도감 번호가 001~151이 아님 (${gen1.length}종)`);
 for (const k of Object.keys(MON_ART)) if (!SPECIES[k]) err(`종족 없는 그림: ${k}`);
 

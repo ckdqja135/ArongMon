@@ -13,6 +13,7 @@ export function useItemOn(mon: Mon, id: ItemId): ItemResult {
   const it = itemData(id);
   const max = calcStats(mon).hp;
   const fail = { ok: false, message: '써도 효과가 없다.' };
+  if (mon.egg !== undefined) return fail;
   if (it.revive) {
     if (mon.hp > 0) return fail;
     const to = Math.max(1, Math.floor(max * it.revive));
@@ -50,6 +51,7 @@ export const isUsableOnMon = (id: ItemId) => {
 /** 실제로 효과가 있을지 미리 확인 (배틀에서 대상 고를 때) */
 export function canUseOn(mon: Mon, id: ItemId): boolean {
   const it = itemData(id);
+  if (mon.egg !== undefined) return false;
   if (it.revive) return mon.hp <= 0;
   if (mon.hp <= 0) return false;
   const healOk = !!it.heal && mon.hp < calcStats(mon).hp;

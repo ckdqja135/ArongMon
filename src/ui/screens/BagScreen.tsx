@@ -51,12 +51,13 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
     const target = await openParty({
       mode: 'item',
       title: `${josa(name, '을/를')}\n누구에게 가르칠까?`,
-      note: (m) => (knows(m) ? { text: '이미 안다', ok: false } : canLearnTM(m.species, move) ? { text: '배울 수 있다', ok: true } : { text: '배울 수 없다', ok: false }),
+      note: (m) =>
+        knows(m) ? { text: '이미 안다', ok: false } : m.egg === undefined && canLearnTM(m.species, move) ? { text: '배울 수 있다', ok: true } : { text: '배울 수 없다', ok: false },
     });
     if (target === null) return;
     const m = G.save.party[target];
     if (knows(m)) setMsg(`${josa(monName(m), '은/는')} 이미\n${josa(name, '을/를')} 알고 있다!`);
-    else if (!canLearnTM(m.species, move)) setMsg(`${josa(monName(m), '은/는')}\n${josa(name, '을/를')} 배울 수 없다!`);
+    else if (m.egg !== undefined || !canLearnTM(m.species, move)) setMsg(`${josa(monName(m), '은/는')}\n${josa(name, '을/를')} 배울 수 없다!`);
     else if (await yesNo(`${monName(m)}에게\n${josa(name, '을/를')} 가르칠까?`)) {
       await G.teachMove(m, move);
       force((x) => x + 1);
@@ -92,6 +93,7 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
     if (mode === 'give') return onDone({ item: id });
     const target = await openParty({ mode: 'item', title: `${josa(ITEMS[id].name, '을/를')}\n누구에게 지니게 할까?` });
     if (target === null) return;
+    if (G.save.party[target].egg !== undefined) return setMsg('알은 도구를\n지닐 수 없다.');
     setMsg(G.giveHeld(G.save.party[target], id));
     force((x) => x + 1);
   };

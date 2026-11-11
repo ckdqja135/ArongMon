@@ -4,7 +4,7 @@ import { itemData } from '../../data/items';
 import { MOVES } from '../../data/moves';
 import { useButtons } from '../../engine/input';
 import { openOverlay } from '../overlay';
-import { Frame, GenderMark, HpBar, MonImg, TypeTag } from '../widgets';
+import { EggImg, Frame, GenderMark, HpBar, MonImg, TypeTag } from '../widgets';
 
 export const openSummary = (list: Mon[], index: number) => openOverlay<void>((done) => <Summary list={list} index={index} onDone={done} />);
 
@@ -32,6 +32,21 @@ function Summary({ list, index, onDone }: { list: Mon[]; index: number; onDone: 
     if (b === 'a' && page === 2 && m.moves.length) setMoveCur(0);
     if (b === 'b') onDone();
   });
+
+  // 알: 그림과 언제 깨어날지만 알려 준다
+  if (m.egg !== undefined) {
+    const hint =
+      m.egg > 300 ? '언제 깨어날지\n전혀 모르겠다.' : m.egg > 80 ? '가끔 움직이는 것 같다.\n조금 더 걸릴 것 같다.' : '안에서 소리가 들린다!\n곧 깨어날 것 같다!';
+    return (
+      <div className="panel summary">
+        <div className="sum-left">
+          <div className="sum-name">알</div>
+          <EggImg view="front" className="sum-sprite" />
+        </div>
+        <Frame className="sum-body egg-note">{hint}</Frame>
+      </div>
+    );
+  }
 
   const lvBase = expForLevel(sp.growth, m.level);
   const lvNext = expForLevel(sp.growth, m.level + 1);

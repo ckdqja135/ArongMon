@@ -1,7 +1,10 @@
 // 게임 전체 진행: 세이브, 스크립트 실행, 배틀 연결, 진화, 기절 처리.
 import { runBattle, type BattleOpts, type BattleResult } from '../battle/engine';
 import { learnMoves, pickMoves, type LearnIO } from '../battle/learn';
-import { createMon, healMon, maxHp, monName, movesLearnedAt, spec, type Mon } from '../battle/mon';
+import {
+  MAX_LEVEL, canFight, createMon, expForLevel, healMon, maxHp, monName, movesLearnedAt, picksAtLevel, setLevel, spec, type Mon,
+} from '../battle/mon';
+import { babyOf, breedChance, hatchSteps } from '../data/breeding';
 import { BattleSession } from '../battle/session';
 import { FISH, RODS, ROD_BITE, type RodId } from '../data/fishing';
 import { itemData, type ItemId } from '../data/items';
@@ -16,6 +19,7 @@ import { ask, say, yesNo } from '../ui/dialog';
 import { openOverlay } from '../ui/overlay';
 import { askName } from '../ui/screens/NameInput';
 import { EvolutionScreen } from '../ui/screens/Evolution';
+import { HatchScreen } from '../ui/screens/Hatch';
 import { MoveChoice } from '../ui/screens/MoveChoice';
 import { MoveForget } from '../ui/screens/MoveForget';
 import { openParty } from '../ui/screens/PartyScreen';
@@ -68,12 +72,13 @@ class Game {
       grassStep: () => this.grassStep(),
       openMenu: () => void this.run(() => openStartMenu()),
       pc: () => void this.run(() => openPC()),
-      followerSpecies: () => this.save.party.find((m) => m.hp > 0)?.species ?? null,
+      followerSpecies: () => this.save.party.find(canFight)?.species ?? null,
       talkFollower: () => void this.run(() => SCRIPTS.follower()),
       riding: () => this.riding,
       bikeBuddy: () => this.save.party.find((m) => spec(m).unlimitedMoves)?.species ?? null,
       water: (dir) => void this.run(() => this.atWater(dir)),
       select: () => void this.run(() => this.toggleBike()),
+      stepped: () => this.stepped(),
     });
     setInterval(() => {
       if (app.get().scene === 'world' || app.get().scene === 'battle') this.save.playSeconds++;
@@ -198,7 +203,7 @@ class Game {
   private async atWater(dir: Dir) {
     if (this.world.surfing) return;
     const rod = RODS.find((r) => this.save.bag[r]);
-    const canSurf = !!this.save.bag.surf && this.save.party.some((x) => x.hp > 0);
+    const canSurf = !!this.save.bag.surf && this.save.party.some(canFight);
     if (!rod && !canSurf) return say('물이 넘실거리고 있다.');
     if (rod && canSurf) {
       const k = await ask('물이 넘실거리고 있다.', ['낚시', '파도타기', '그만두기']);
@@ -214,7 +219,7 @@ class Game {
   }
 
   private async startSurf(dir: Dir) {
-    const m = this.save.party.find((x) => x.hp > 0)!;
+    const m = this.save.party.find(canFight)!;
     await say(`${josa(monName(m), '과/와')} 함께\n파도타기를 시작했다!`);
     this.riding = false;
     this.world.startSurf(dir);
@@ -223,7 +228,7 @@ class Game {
   /** 낚싯줄을 드리우고 기다린다. 입질이 오면 바로 배틀 */
   async fish(rod: RodId) {
     const w = this.world;
-    if (!this.save.party.some((m) => m.hp > 0)) return say('싸울 수 있는 몬스터가 없다!');
+    if (!this.save.party.some(canFight)) return say('싸울 수 있는 몬스터가 없다!');
     this.riding = false;
     await say(`${josa(this.player, '은/는')} ${josa(itemData(rod).name, '을/를')}\n물에 드리웠다!`);
     w.fishing = { bite: false };
@@ -311,7 +316,7 @@ class Game {
   private grassStep() {
     const enc = this.world.map.encounters;
     if (!enc || rand(256) >= enc.rate) return;
-    if (!this.save.party.some((m) => m.hp > 0)) return;
+    if (!this.save.party.some(canFight)) return;
     const table = this.world.surfing ? enc.surf : enc[timeOfDay()] ?? enc.day;
     if (!table?.length) return;
     const e = weighted(table);
@@ -404,6 +409,97 @@ class Game {
     chooseForget: (mon, move) => openOverlay<number | null>((done) => <MoveForget mon={mon} move={move} onDone={done} />),
     chooseMove: (mon, options) => openOverlay<MoveId>((done) => <MoveChoice mon={mon} options={options} onDone={done} />),
   };
+
+  // ── 키우미집 ──
+  daycare() {
+    return (this.save.daycare ??= { mons: [], egg: false, steps: 256 });
+  }
+
+  /** 한 걸음마다: 맡긴 포켓몬은 경험치 1, 256걸음마다 알이 생기는지, 데리고 다니는 알은 깨어날 때가 가까워진다 */
+  private stepped() {
+    const dc = this.save.daycare;
+    if (dc) {
+      for (const d of dc.mons) if (d.mon.exp < expForLevel(spec(d.mon).growth, MAX_LEVEL)) d.mon.exp += 1;
+      if (dc.mons.length === 2 && !dc.egg && --dc.steps <= 0) {
+        dc.steps = 256;
+        if (Math.random() < breedChance(dc.mons[0].mon, dc.mons[1].mon)) dc.egg = true;
+      }
+    }
+    const egg = this.save.party.find((m) => m.egg !== undefined && --m.egg <= 0);
+    if (egg) void this.run(() => this.hatch(egg));
+  }
+
+  /** 맡긴 포켓몬이 지금 몇 레벨인지 (경험치로) */
+  daycareLevel(m: Mon) {
+    let lv = m.level;
+    while (lv < MAX_LEVEL && m.exp >= expForLevel(spec(m).growth, lv + 1)) lv++;
+    return lv;
+  }
+
+  async daycareDeposit() {
+    const party = this.save.party;
+    const i = await openParty({ mode: 'select', title: '어느 포켓몬을 맡길까?' });
+    if (i === null) return;
+    const m = party[i];
+    if (m.egg !== undefined) return say('할머니: 알은 맡을 수 없단다.');
+    if (!party.some((p, k) => k !== i && canFight(p))) return say('할머니: 그 포켓몬을 맡기면\n싸울 포켓몬이 없잖니.');
+    party.splice(i, 1);
+    const dc = this.daycare();
+    dc.mons.push({ mon: m, level: m.level });
+    dc.steps = 256;
+    await say(`할머니: ${josa(monName(m), '을/를')}\n잘 맡아 두마.`);
+  }
+
+  async daycareWithdraw() {
+    const dc = this.daycare();
+    if (this.save.party.length >= PARTY_MAX) return say('할머니: 데려갈 자리가 없구나.\n자리를 비우고 오렴.');
+    const k = await ask('할머니: 어느 포켓몬을 데려가겠니?', [...dc.mons.map((d) => `${monName(d.mon)} Lv${this.daycareLevel(d.mon)}`), '그만두기']);
+    if (k >= dc.mons.length) return;
+    const d = dc.mons[k];
+    const lv = this.daycareLevel(d.mon);
+    // 2세대처럼 100원 + 오른 레벨마다 100원
+    const fee = 100 + 100 * (lv - d.level);
+    if (lv > d.level) await say(`할머니: ${josa(monName(d.mon), '은/는')}\n레벨이 ${lv - d.level}만큼 올랐단다.`);
+    if (!(await yesNo(`할머니: 맡긴 값으로 ${fee}원이란다.\n데려가겠니?`))) return;
+    if (this.save.money < fee) return say('할머니: 돈이 모자라는구나.');
+    this.save.money -= fee;
+    dc.mons.splice(k, 1);
+    // 부모가 한 마리만 남으면 아직 안 받은 알도 없어진다
+    if (dc.mons.length < 2) dc.egg = false;
+    this.save.party.push(d.mon);
+    await say(`${josa(this.player, '은/는')} ${josa(monName(d.mon), '을/를')}\n돌려받았다!`);
+    for (let l = d.mon.level + 1; l <= lv; l++) {
+      setLevel(d.mon, l);
+      await learnMoves(d.mon, movesLearnedAt(spec(d.mon), l), this.learnIO);
+      await pickMoves(d.mon, picksAtLevel(spec(d.mon), l), this.learnIO);
+    }
+  }
+
+  /** 할아버지가 맡고 있던 알: 엄마 쪽 가장 처음 모습의 Lv.5 */
+  takeEgg(): Mon {
+    const dc = this.daycare();
+    const sp = babyOf(dc.mons[0].mon, dc.mons[1].mon);
+    const m = createMon(sp, 5, { ot: this.player, otId: this.save.playerId });
+    m.egg = hatchSteps(sp);
+    dc.egg = false;
+    this.save.party.push(m);
+    return m;
+  }
+
+  /** 알이 깨어난다 */
+  private async hatch(m: Mon) {
+    await say('어...?');
+    await openOverlay<void>((done) => <HatchScreen mon={m} onDone={done} />);
+    m.egg = undefined;
+    m.metMap = this.world.map.name;
+    m.metLevel = m.level;
+    this.markCaught(m.species);
+    await say(`${josa(spec(m).name, '이/가')}\n알에서 태어났다!`);
+    if (await yesNo(`${spec(m).name}에게\n이름을 지어 주겠습니까?`)) {
+      const nick = await askName(`${spec(m).name}의 이름은?`, spec(m).name);
+      if (nick && nick !== spec(m).name) m.nickname = nick;
+    }
+  }
 
   /** 포켓몬에게 도구를 지니게 한다. 원래 지니던 도구는 가방으로 돌아간다. 안내 문구를 돌려준다 */
   giveHeld(m: Mon, id: ItemId): string {

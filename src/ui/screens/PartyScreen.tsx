@@ -62,6 +62,7 @@ function PartyScreen({ mode, active, title, note, onDone }: PartyOpts & { onDone
     else if (label === '지닌 도구') {
       // 지닌 도구 빼기·바꾸기, 없으면 가방에서 골라 지니게 한다
       const m = party[i];
+      if (m.egg !== undefined) return setMsg('알은 도구를\n지닐 수 없다.');
       const k = m.item ? await ask(`${josa(monName(m), '은/는')}\n${josa(itemData(m.item).name, '을/를')} 지니고 있다.`, ['빼기', '바꾸기', '그만두기']) : 1;
       if (k === 0) setMsg(G.takeHeld(m));
       else if (k === 1) {
@@ -73,7 +74,8 @@ function PartyScreen({ mode, active, title, note, onDone }: PartyOpts & { onDone
     else if (label === '순서 바꾸기') setSwapFrom(i);
     else if (label === '교체') {
       const m = party[i];
-      if (m.hp <= 0) setMsg(`${josa(monName(m), '은/는')}\n싸울 힘이 남아 있지 않다!`);
+      if (m.egg !== undefined) setMsg('알은 싸울 수 없다!');
+      else if (m.hp <= 0) setMsg(`${josa(monName(m), '은/는')}\n싸울 힘이 남아 있지 않다!`);
       else if (m === active) setMsg(`${josa(monName(m), '은/는')}\n이미 나와 있다!`);
       else onDone(i);
     }
@@ -95,17 +97,25 @@ function PartyScreen({ mode, active, title, note, onDone }: PartyOpts & { onDone
                   <GenderMark mon={m} />
                   {m.item && <span className="held-mark" title={itemData(m.item).name}>✦</span>}
                 </div>
-                <div className="plv">
-                  Lv{m.level}
-                  {m.hp <= 0 ? <span className="status fnt">기절</span> : m.status && <span className={`status ${m.status}`}>{STATUS_SHORT[m.status]}</span>}
-                </div>
-                <HpBar hp={m.hp} max={max} width={48} />
+                {m.egg !== undefined ? (
+                  <div className="plv">깨어나길 기다림</div>
+                ) : (
+                  <>
+                    <div className="plv">
+                      Lv{m.level}
+                      {m.hp <= 0 ? <span className="status fnt">기절</span> : m.status && <span className={`status ${m.status}`}>{STATUS_SHORT[m.status]}</span>}
+                    </div>
+                    <HpBar hp={m.hp} max={max} width={48} />
+                  </>
+                )}
                 {note ? (
                   <div className={`php note${note(m).ok ? ' ok' : ''}`}>{note(m).text}</div>
                 ) : (
-                  <div className="php">
-                    {m.hp}/{max}
-                  </div>
+                  m.egg === undefined && (
+                    <div className="php">
+                      {m.hp}/{max}
+                    </div>
+                  )
                 )}
               </div>
             </div>

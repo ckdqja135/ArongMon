@@ -1,5 +1,6 @@
 // 이야기 진행 스크립트. 지도 데이터의 script 이름으로 불린다.
-import { calcStats, createMon, monName, spec } from '../battle/mon';
+import { calcStats, canFight, createMon, monName, spec } from '../battle/mon';
+import { breedChance } from '../data/breeding';
 import type { RodId } from '../data/fishing';
 import { ITEMS, itemData, type ItemId } from '../data/items';
 import { MOVES } from '../data/moves';
@@ -10,10 +11,10 @@ import { pick } from '../engine/rng';
 import type { CharBase } from '../gfx/charArt';
 import type { CharPalName } from '../gfx/palettes';
 import { sfx } from '../engine/sound';
-import { say, yesNo } from '../ui/dialog';
+import { ask, say, yesNo } from '../ui/dialog';
 import { openCredits } from '../ui/screens/Credits';
 import { openMart } from '../ui/screens/MartScreen';
-import { G } from './game';
+import { G, PARTY_MAX } from './game';
 import type { NpcRt } from './world';
 
 type Script = (npc?: NpcRt) => Promise<void>;
@@ -56,7 +57,7 @@ const RIVAL_FINAL: Record<string, string> = { bulbasaur: 'venusaur', charmander:
 export const SCRIPTS: Record<string, Script> = {
   /** 뒤따라오는 몬스터에게 말 걸기 */
   async follower() {
-    const m = G.save.party.find((x) => x.hp > 0);
+    const m = G.save.party.find(canFight);
     const f = G.world.follower;
     if (!m || !f) return;
     const name = monName(m);
@@ -174,6 +175,49 @@ export const SCRIPTS: Record<string, Script> = {
 
   async mart() {
     await openMart(MART_STOCK[G.world.map.id] ?? MART_STOCK.dewMart);
+  },
+  // ── 키우미집 (한빛시티) ──
+  async daycareLady() {
+    const dc = G.daycare();
+    await say('할머니: 여기는 키우미집이란다.\n포켓몬을 두 마리까지 맡아 키워 주지.');
+    for (;;) {
+      const options = [...(dc.mons.length < 2 ? ['맡기기'] : []), ...(dc.mons.length ? ['찾아가기'] : []), '그만두기'];
+      const pick = options[await ask('할머니: 무엇을 도와줄까?', options)];
+      if (pick === '맡기기') await G.daycareDeposit();
+      else if (pick === '찾아가기') await G.daycareWithdraw();
+      else break;
+    }
+    await say('할머니: 또 오렴.');
+  },
+  async daycareMan() {
+    const dc = G.daycare();
+    if (dc.egg) {
+      await say('할아버지: 오오, 왔구나! 맡긴 포켓몬을\n돌보다가 알을 발견했단다!');
+      if (!(await yesNo('할아버지: 이 알을 가져가겠니?'))) {
+        await say('할아버지: 그럼 내가 잘 데리고 있으마.');
+        return;
+      }
+      if (G.save.party.length >= PARTY_MAX) {
+        await say('할아버지: 데려갈 자리가 없구나.\n자리를 비우고 오렴.');
+        return;
+      }
+      G.takeEgg();
+      sfx('item');
+      await say(`${josa(P(), '은/는')} 알을 받았다!`);
+      await say('할아버지: 알을 데리고 다니면\n언젠가 깨어날 거란다.');
+      return;
+    }
+    const [a, b] = dc.mons.map((d) => d.mon);
+    if (a && b) {
+      const c = breedChance(a, b);
+      await say(
+        c >= 0.7 ? '할아버지: 둘은 아주 사이가 좋구나!' : c >= 0.5 ? '할아버지: 둘은 사이가 좋은 편이란다.' : c > 0 ? '할아버지: 둘은 그럭저럭 지낸단다.' : '할아버지: 둘은 서로 관심이 없는 것 같구나.',
+      );
+    } else if (a) {
+      await say(`할아버지: ${josa(monName(a), '은/는')}\n잘 지내고 있단다.`);
+    } else {
+      await say('할아버지: 우리 할멈이 집 안에서\n포켓몬을 맡아 준단다.');
+    }
   },
   async heldMart() {
     await say('여기는 포켓몬에게 지니게 하는\n도구 코너예요!');

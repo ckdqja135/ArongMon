@@ -25,6 +25,8 @@ export interface SaveData {
   caught: string[];
   playSeconds: number;
   options: { textSpeed: 'slow' | 'mid' | 'fast'; sound?: boolean };
+  /** 키우미집: 맡긴 포켓몬(맡길 때 레벨), 알이 생겼는지, 다음 알 확인까지 걸음 수 */
+  daycare?: { mons: { mon: Mon; level: number }[]; egg: boolean; steps: number };
 }
 
 const KEY = 'alongmon-save-v1';

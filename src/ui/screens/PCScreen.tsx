@@ -1,4 +1,4 @@
-import { monName, type Mon } from '../../battle/mon';
+import { canFight, monName, type Mon } from '../../battle/mon';
 import { josa } from '../../engine/josa';
 import { G, PARTY_MAX } from '../../game/game';
 import { ask, say } from '../dialog';
@@ -25,7 +25,7 @@ async function deposit() {
   const i = await openParty({ mode: 'select', title: '어느 몬스터를 맡길까?' });
   if (i === null) return;
   const m = party[i];
-  if (party.filter((p, k) => k !== i && p.hp > 0).length === 0) {
+  if (party.filter((p, k) => k !== i && canFight(p)).length === 0) {
     await say('싸울 수 있는 몬스터가\n남지 않게 됩니다!');
     return;
   }

@@ -186,7 +186,7 @@ function PartyBalls({ party, className }: { party: Mon[]; className: string }) {
     <div className={`party-balls ${className}`}>
       {Array.from({ length: PARTY_MAX }, (_, i) => {
         const m = party[i];
-        return m ? <PixCanvas key={i} src={smallBallCanvas(m.hp <= 0)} className="ball" /> : <span key={i} className="ball none" />;
+        return m && m.egg === undefined ? <PixCanvas key={i} src={smallBallCanvas(m.hp <= 0)} className="ball" /> : <span key={i} className="ball none" />;
       })}
     </div>
   );

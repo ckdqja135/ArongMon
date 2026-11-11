@@ -69,6 +69,8 @@ export interface WorldHooks {
   /** 물을 마주 보고 A를 눌렀을 때 (파도타기) */
   water(dir: Dir): void;
   select(): void;
+  /** 플레이어가 한 걸음을 다 걸었을 때 (키우미집, 알) */
+  stepped(): void;
 }
 
 /** 플레이어 뒤를 따라 걷는 몬스터 */
@@ -550,6 +552,7 @@ export class World {
 
   private onStepDone() {
     this.crossEdge();
+    this.hooks.stepped();
     const p = this.player;
     const w = this.warpAt(p.x, p.y);
     if (w && !w.exit) {

@@ -51,7 +51,7 @@ function scenes(): Scene[] {
   const call = callName(name);
   const h = Math.floor(s.playSeconds / 3600);
   const m = Math.floor((s.playSeconds % 3600) / 60);
-  const team = s.party.filter((x) => x.hp >= 0);
+  const team = s.party.filter((x) => x.egg === undefined);
   return [
     { ms: 6500, body: <Lines>{`모든 것은 그날 아침,\n느티 박사의 연구소에서\n시작되었다.`}</Lines> },
     {

@@ -832,6 +832,7 @@ export const MAPS: Record<string, MapDef> = {
         text: '한빛시티 체육관 관장 다솜은\n노말 타입을 쓰는데,\n엄청 귀엽고 엄청 세!' },
       { id: 'hbMan', x: 10, y: 5, dir: 'down', sprite: { base: 'cap', pal: 'clerk' }, move: 'look',
         text: '저 큰 건물이 한빛방송국이야.\n요즘 검은 옷 입은 사람들이\n자꾸 기웃거려서 걱정이야.' },
+      { id: 'daycareMan', x: 23, y: 17, dir: 'down', sprite: { base: 'old', pal: 'prof' }, script: 'daycareMan' },
       { id: 'hbGrandpa', x: 18, y: 19, sprite: { base: 'hat', pal: 'prof' }, move: 'wander',
         text: '이 도시는 밤에도 불빛이\n꺼지지 않는다네.\n그래서 이름이 한빛이지.' },
       { id: 'hbGruntDoor', x: 6, y: 5, dir: 'right', sprite: { base: 'cap', pal: 'shadow' }, sight: 1, showIf: 'radioTakeover', hideIf: 'radioCleared',
@@ -936,12 +937,13 @@ export const MAPS: Record<string, MapDef> = {
 
   hanbitHouse2: {
     id: 'hanbitHouse2',
-    name: '한빛시티 민가',
+    name: '키우미집',
     border: 'X',
     tiles: house,
     warps: doorWarps('hanbitHouse2'),
     npcs: [
-      { id: 'hbH2', x: 2, y: 2, dir: 'down', sprite: { base: 'bun', pal: 'mom' }, move: 'wander',
+      { id: 'daycareLady', x: 2, y: 2, dir: 'down', sprite: { base: 'old', pal: 'mom' }, script: 'daycareLady' },
+      { id: 'hbH2', x: 5, y: 3, dir: 'left', sprite: { base: 'bun', pal: 'mom' }, move: 'wander',
         text: '3번도로 옆 바위굴에는 밤에만\n나타나는 분홍색 몬스터가\n있대. 삐삐라던가?' },
     ],
   },

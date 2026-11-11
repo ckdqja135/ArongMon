@@ -5,7 +5,7 @@ import { useButtons, type Button } from '../engine/input';
 import { sfx } from '../engine/sound';
 import { settings } from '../game/settings';
 import { loadMonArt } from '../gfx/monOverrides';
-import { badgeCanvas, monCanvas, paint, type MonView } from '../gfx/sprites';
+import { badgeCanvas, eggCanvas, monCanvas, paint, type MonView } from '../gfx/sprites';
 import { paginate } from './text';
 
 export function Frame({ style, className = '', children }: { style?: CSSProperties; className?: string; children?: ReactNode }) {
@@ -176,7 +176,15 @@ export function BadgeImg({ id, on, className, style }: { id: string; on: boolean
   return <canvas ref={ref} className={`pix ${className ?? ''}`} style={style} />;
 }
 
+/** 포켓몬 알 그림 */
+export function EggImg({ view, className }: { view: 'icon' | 'front'; className?: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => paint(ref.current, eggCanvas(view)), [view]);
+  return <canvas ref={ref} className={`pix ${className ?? ''}`} />;
+}
+
 export function MonIcon({ mon, bounce = false }: { mon: Mon; bounce?: boolean }) {
+  if (mon.egg !== undefined) return <EggImg view="icon" className={bounce ? 'icon bounce' : 'icon'} />;
   return <MonImg species={mon.species} view="icon" shiny={isShiny(mon)} className={bounce ? 'icon bounce' : 'icon'} />;
 }
 
@@ -197,6 +205,7 @@ export function HpBar({ hp, max, width = 48 }: { hp: number; max: number; width?
 }
 
 export function GenderMark({ mon }: { mon: Mon }) {
+  if (mon.egg !== undefined) return null;
   const g = gender(mon);
   if (!g) return null;
   return <span className={`gender ${g}`}>{g === 'm' ? '♂' : '♀'}</span>;

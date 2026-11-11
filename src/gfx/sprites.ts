@@ -5,6 +5,7 @@ import { BADGE_ART, dimPalette } from './badgeArt';
 import { battleBgGrid, platformGrid, type BattleTerrain, type BattleTime } from './battleBg';
 import { artPending, fieldBox, loadMonArt, monOverride } from './monOverrides';
 import { ballGrid, ballPalette, groundBallGrid, smallBallGrid, type BallId } from './ballArt';
+import { EGG, EGG_PAL } from './eggArt';
 import { CHAR_H, CHAR_W, EXCLAIM, charFrame, type CharBase, type Dir } from './charArt';
 import { DESIGN_SIZE, renderBack, renderFront, renderIcon, renderMonster } from './monsterArt';
 import { CHAR_PAL, PAL, type CharPalName } from './palettes';
@@ -138,6 +139,19 @@ export const shadowCanvas = (w = 12) =>
   });
 
 export const tubeCanvas = () => cached('tube', () => gridCanvas(SWIM_TUBE, ['#ffffff', '#f04848', '#b82828', '#2c2c3a']));
+
+/** 포켓몬 알: icon은 32칸에 2배, front는 80칸에 3배로 바닥 가운데 */
+export function eggCanvas(view: 'icon' | 'front') {
+  return cached(`egg:${view}`, () => {
+    const box = view === 'icon' ? 32 : 80, k = view === 'icon' ? 2 : 3;
+    const c = document.createElement('canvas');
+    c.width = c.height = box;
+    const ctx = c.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(gridCanvas(EGG, EGG_PAL), (box - 16 * k) / 2, box - 15 * k, 16 * k, 16 * k);
+    return c;
+  });
+}
 
 /** 필드에 떨어진 도구 (몬스터볼) */
 export const groundBallCanvas = () => cached('groundBall', () => gridCanvas(groundBallGrid(), ballPalette('capsule')));
