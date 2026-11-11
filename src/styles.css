@@ -213,9 +213,11 @@ b { font-weight: normal; color: #2858a8; }
 .dex { background: linear-gradient(#e85858, #a82c30); }
 .dex-head { position: absolute; top: 4px; left: 8px; color: #fff; text-shadow: 1px 1px 0 #6c1818; }
 .dex-head .small { margin-left: 6px; }
-.dex-preview { position: absolute; left: 8px; top: 34px; width: 88px; height: 88px; border-radius: 8px; background: #f4f8ff; border: 2px solid #6c1818; display: flex; align-items: center; justify-content: center; }
+.dex-preview { position: absolute; left: 8px; top: 24px; width: 88px; height: 88px; border-radius: 8px; background: #f4f8ff; border: 2px solid #6c1818; display: flex; align-items: center; justify-content: center; }
 .dex-preview .unknown { font-size: 24px; color: #a0a8c0; }
-.dex-list { left: 104px; right: 4px; top: 22px; bottom: 4px; padding: 4px 6px 4px 3px; }
+.dex-list { left: 104px; right: 4px; top: 22px; height: 104px; padding: 4px 6px 4px 3px; }
+.dex-types { position: absolute; left: 8px; top: 116px; width: 92px; display: flex; gap: 2px; justify-content: center; }
+.dex-desc { left: 4px; right: 4px; bottom: 4px; height: 54px; padding: 4px 8px; white-space: pre-line; line-height: 15px; }
 .dex-list .no { color: #8890a8; font-family: Galmuri9; font-size: 10px; }
 .dex-list .mark { width: 8px; color: #e05050; font-size: 8px; }
 .dex-entry { background: linear-gradient(#f4f8ff, #c8d8f0); }

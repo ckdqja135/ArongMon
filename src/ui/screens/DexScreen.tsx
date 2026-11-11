@@ -20,6 +20,7 @@ function DexScreen({ onDone }: { onDone: () => void }) {
         포켓몬도감 <span className="small">발견 {seen.size} · 잡음 {caught.size}</span>
       </div>
       <div className="dex-preview">{seen.has(sel.key) ? <MonImg species={sel.key} view="front" /> : <div className="unknown">?</div>}</div>
+      <div className="dex-types">{seen.has(sel.key) && sel.types.map((t) => <TypeTag key={t} type={t} />)}</div>
       <Frame className="dex-list">
         <Menu
           items={list.map((s) => ({
@@ -34,9 +35,13 @@ function DexScreen({ onDone }: { onDone: () => void }) {
           onMove={setCur}
           onSelect={(k) => seen.has(list[k].key) && setEntry(k)}
           onCancel={onDone}
-          visible={9}
+          visible={6}
           active={entry === null}
         />
+      </Frame>
+      {/* 고른 포켓몬의 설명: 잡았으면 도감 설명, 보기만 했으면 분류만 */}
+      <Frame className="dex-desc">
+        {caught.has(sel.key) ? sel.dex : seen.has(sel.key) ? `${sel.category}포켓몬\n잡으면 자세한 설명을 볼 수 있다.` : '아직 만나지 못한 포켓몬이다.'}
       </Frame>
       {entry !== null && <DexEntry k={entry} caught={caught.has(list[entry].key)} onDone={() => setEntry(null)} />}
     </div>
