@@ -278,6 +278,8 @@ interface Opts {
   linesOnly?: (r: number, g: number, b: number) => boolean;
   /** 외곽선에 원래 색을 얼마나 남길지 (작을수록 검고 진하다) */
   ink?: number;
+  /** 배틀 그림 크기를 키에서 정한 값 대신 이 값으로 (불꽃·날개가 넓게 퍼져 몸이 작아지는 그림) */
+  size?: number;
   /** 작아서 묻히는 무늬를 원본에서 찾아 칠한다 */
   feats?: Feature[];
   /** 색이 크게 다른 부분 사이에 경계선을 넣는다 (RGB 거리) */
@@ -328,6 +330,10 @@ const HAND_FIELD = new Set(['raichu']);
 
 /** 종족마다 따로 맞춘 배틀 그림 설정 */
 const FRONT_OPTS: Record<string, Opts> = {
+  // 불꽃 갈기·꼬리가 넓게 퍼져 말 몸통과 뿔이 작아진다
+  rapidash: { size: 72 },
+  // 설정을 바꿔 찍어 보기: TRY='{"키":{"size":70}}' npx tsx scripts/pixelize-mon.ts <원본폴더> 키
+  ...(process.env.TRY ? JSON.parse(process.env.TRY) : {}),
   // 노란 가운데의 음영이 바퀴살 같은 선으로 찍힌다. 안쪽 선은 갈색 팔에만, 노란 가운데·보석 둘레에는 경계선
   staryu: {
     linesOnly: (r, g, b) => r > 80 && g < 0.7 * r && b < 100,
@@ -360,7 +366,8 @@ for (const sp of Object.values(SPECIES)) {
   const dir = `src/assets/mon/${sp.key}`;
   mkdirSync(dir, { recursive: true });
   const normal = crop(load(`${srcDir}/${sp.no}.png`));
-  save(pixelize(normal, frontSize(sp.height), 78, 16, FRONT_OPTS[sp.key]), `${dir}/front.png`);
+  const fo = FRONT_OPTS[sp.key];
+  save(pixelize(normal, fo?.size ?? frontSize(sp.height), 78, 16, fo), `${dir}/front.png`);
   save(pixelize(normal, 26, 30, 16), `${dir}/icon.png`);
   // 필드 그림은 목표 크기를 넘지 않게 (게임에서 한 번 더 줄이면 픽셀이 빠져 앙상해진다)
   const fs = fieldTarget(normal, sp.height);
@@ -368,7 +375,7 @@ for (const sp of Object.values(SPECIES)) {
   const shinyPath = `${srcDir}/shiny/${sp.no}.png`;
   if (existsSync(shinyPath)) {
     const shiny = crop(load(shinyPath));
-    save(pixelize(shiny, frontSize(sp.height), 78, 16, FRONT_OPTS[sp.key]), `${dir}/front-shiny.png`);
+    save(pixelize(shiny, fo?.size ?? frontSize(sp.height), 78, 16, fo), `${dir}/front-shiny.png`);
     save(pixelize(shiny, 26, 30, 16), `${dir}/icon-shiny.png`);
   }
   console.log(sp.key);
