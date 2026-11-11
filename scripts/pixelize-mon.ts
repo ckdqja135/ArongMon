@@ -169,23 +169,70 @@ function innerLines(img: Img, frac: Float32Array, minFrac: number) {
   for (const o of marks) for (let c = 0; c < 3; c++) data[o + c] *= 0.55;
 }
 
-/** 진한 무늬(눈썹·눈동자·팔찌처럼 원본에서 정말 어두운 곳)가 칸의 frac 이상이면 그 칸을 어둡게. 음영 잔주름은 건드리지 않는다 */
-function darkFeatures(src: Img, img: Img, frac: number) {
+/** 원본에서 test에 맞는 무늬(눈동자·분홍 코처럼 작아서 묻히는 곳)가 칸의 frac 이상이면 그 칸을 color로 칠한다 */
+interface Feature { test: (r: number, g: number, b: number) => boolean; frac: number; color: [number, number, number] }
+function features(src: Img, img: Img, list: Feature[]) {
   const sx = src.w / img.w, sy = src.h / img.h;
   for (let ty = 0; ty < img.h; ty++)
     for (let tx = 0; tx < img.w; tx++) {
       const o = (ty * img.w + tx) * 4;
       if (!img.data[o + 3]) continue;
-      let dark = 0, n = 0;
+      const hit = list.map(() => 0);
+      let n = 0;
       for (let y = Math.floor(ty * sy); y < Math.min(src.h, Math.ceil((ty + 1) * sy)); y++)
         for (let x = Math.floor(tx * sx); x < Math.min(src.w, Math.ceil((tx + 1) * sx)); x++) {
           const i = (y * src.w + x) * 4;
           if (src.data[i + 3] < 128) continue;
           n++;
-          if (lum(src.data, i) < 64) dark++;
+          list.forEach((f, k) => { if (f.test(src.data[i], src.data[i + 1], src.data[i + 2])) hit[k]++; });
         }
-      if (n && dark / n >= frac && lum(img.data, o) > 70) for (let c = 0; c < 3; c++) img.data[o + c] = img.data[o + c] * 0.3 + 24 * 0.7;
+      const k = list.findIndex((f, k) => n && hit[k] / n >= f.frac);
+      if (k >= 0) img.data.set(list[k].color, o);
     }
+}
+
+/** 원본에서 두 부분(a, b)이 맞닿는 자리: 칸 안에 둘이 모두 frac 이상 섞였으면 그 칸을 진하게 칠해 경계선을 긋는다 */
+interface Border { a: Feature['test']; b: Feature['test']; frac: number }
+function borders(src: Img, img: Img, list: Border[]) {
+  const sx = src.w / img.w, sy = src.h / img.h;
+  const marks: number[] = [];
+  for (let ty = 0; ty < img.h; ty++)
+    for (let tx = 0; tx < img.w; tx++) {
+      const o = (ty * img.w + tx) * 4;
+      if (!img.data[o + 3]) continue;
+      const ha = list.map(() => 0), hb = list.map(() => 0);
+      let n = 0;
+      for (let y = Math.floor(ty * sy); y < Math.min(src.h, Math.ceil((ty + 1) * sy)); y++)
+        for (let x = Math.floor(tx * sx); x < Math.min(src.w, Math.ceil((tx + 1) * sx)); x++) {
+          const i = (y * src.w + x) * 4;
+          if (src.data[i + 3] < 128) continue;
+          n++;
+          const [r, g, b] = [src.data[i], src.data[i + 1], src.data[i + 2]];
+          list.forEach((f, k) => { if (f.a(r, g, b)) ha[k]++; if (f.b(r, g, b)) hb[k]++; });
+        }
+      if (n && list.some((f, k) => ha[k] / n >= f.frac && hb[k] / n >= f.frac)) marks.push(o);
+    }
+  for (const o of marks) for (let c = 0; c < 3; c++) img.data[o + c] *= 0.45;
+}
+
+/** 색이 크게 다른 이웃과 닿은 칸 중 어두운 쪽을 진하게 (노란 몸과 갈색 팔 사이 같은 경계선). dist는 RGB 거리 */
+function regionLines(img: Img, dist: number) {
+  const { w, h, data } = img;
+  const marks: number[] = [];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 4;
+      if (!data[o + 3]) continue;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+        const q = (yy * w + xx) * 4;
+        if (!data[q + 3]) continue;
+        const d = Math.hypot(data[o] - data[q], data[o + 1] - data[q + 1], data[o + 2] - data[q + 2]);
+        if (d > dist && lum(data, o) < lum(data, q)) { marks.push(o); break; }
+      }
+    }
+  for (const o of marks) for (let c = 0; c < 3; c++) data[o + c] *= 0.45;
 }
 
 /** 투명한 곳과 닿은 가장자리를 진하게 칠해 도트 외곽선을 만든다 */
@@ -209,13 +256,17 @@ interface Opts {
   rescue?: number;
   /** 안쪽 선을 넣을지 (매끈한 몸에 잔주름처럼 생기는 그림은 끈다) */
   lines?: boolean;
-  /** 안쪽 선 대신 정말 어두운 무늬만 살린다 (칸에 섞인 비율) */
-  dark?: number;
+  /** 작아서 묻히는 무늬를 원본에서 찾아 칠한다 */
+  feats?: Feature[];
+  /** 색이 크게 다른 부분 사이에 경계선을 넣는다 (RGB 거리) */
+  region?: number;
+  /** 원본에서 두 부분이 맞닿는 자리에 경계선 */
+  edges?: Border[];
   /** 채도 (작은 무늬 색이 바탕에 묻히는 그림은 올린다) */
   sat?: number;
 }
 
-function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 128, rescue = 0, lines = true, dark = 0, sat = TUNE.sat }: Opts = {}): Img {
+function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 128, rescue = 0, lines = true, feats, region, edges, sat = TUNE.sat }: Opts = {}): Img {
   const s = Math.min(size / ((src.w + src.h) / 2), cap / Math.max(src.w, src.h));
   const tw = Math.max(1, Math.round(src.w * s)), th = Math.max(1, Math.round(src.h * s));
   const img = shrink(src, tw, th);
@@ -224,7 +275,9 @@ function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 1
   quantize(sharp, colors, cut, rescue);
   // 작은 그림(아이콘·필드)은 안쪽 선을 넣으면 뭉개지므로 큰 그림에만
   if (size >= 40 && lines) innerLines(sharp, edgeFraction(src, tw, th, TUNE.edge), TUNE.frac);
-  if (dark) darkFeatures(src, sharp, dark);
+  if (region) regionLines(sharp, region);
+  if (edges) borders(src, sharp, edges);
+  if (feats) features(src, sharp, feats);
   outline(sharp);
   return sharp;
 }
@@ -249,10 +302,27 @@ const HAND_FIELD = new Set(['raichu']);
 
 /** 종족마다 따로 맞춘 배틀 그림 설정 */
 const FRONT_OPTS: Record<string, Opts> = {
-  // 매끈한 몸의 음영이 바퀴살 같은 선으로 찍힌다
-  staryu: { lines: false },
-  // 털 질감이 얼굴에 낙서처럼 찍히고 눈·분홍 코가 묻힌다
-  primeape: { lines: false, dark: 0.25, rescue: 4, sat: 1.35 },
+  // 매끈한 몸의 음영이 바퀴살 같은 선으로 찍힌다. 대신 원본에서 노란 가운데·보석과 갈색 팔이 맞닿는 곳에만 경계선
+  staryu: {
+    lines: false,
+    edges: [
+      // 노란 가운데 | 갈색 팔
+      { a: (r, g, b) => r > 180 && g > 0.78 * r && b < 150, b: (r, g, b) => r > 80 && g < 0.7 * r && b < 100, frac: 0.06 },
+      // 빨간 보석 | 노란 가운데
+      { a: (r, g) => r > 150 && g < 80, b: (r, g, b) => r > 180 && g > 0.78 * r && b < 150, frac: 0.12 },
+    ],
+  },
+  // 털 질감이 얼굴에 낙서처럼 찍히고 눈·분홍 코가 묻힌다. 눈썹·눈동자와 코를 원본에서 찾아 칠한다
+  primeape: {
+    lines: false,
+    rescue: 4,
+    sat: 1.35,
+    feats: [
+      { test: (r, g, b) => r + g + b < 250, frac: 0.1, color: [36, 28, 28] },
+      { test: (r, g, b) => r > 200 && r - g >= 12 && b > g, frac: 0.3, color: [242, 168, 184] },
+      { test: (r, g, b) => r > 251 && g > 251 && b > 251, frac: 0.45, color: [255, 255, 255] },
+    ],
+  },
 };
 
 const [srcDir, only] = process.argv.slice(2);
