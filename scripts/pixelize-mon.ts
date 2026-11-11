@@ -348,10 +348,12 @@ const FRONT_OPTS: Record<string, Opts> = {
     sat: 1.3,
     // 눈: 흰자위 위쪽의 까만 눈동자와 눈매
     feats: [
-      { test: (r, g, b) => r + g + b < 250, frac: 0.12, color: [36, 28, 44], box: [18, 11, 41, 19] },
+      { test: (r, g, b) => r + g + b < 250, frac: 0.07, color: [16, 12, 20], box: [18, 11, 41, 19] },
       { test: (r, g, b) => r > 228 && g > 228 && b > 228, frac: 0.4, color: [255, 255, 255], box: [18, 11, 41, 19] },
     ],
   },
+  // 몸의 줄무늬가 원본에 이미 있어 안쪽 선을 더하면 지저분하다. 연보라색을 살린다 (공식 일러스트로 찍는다)
+  muk: { lines: false, sat: 1.4, size: 70 },
   // 설정을 바꿔 찍어 보기: TRY='{"키":{"size":70}}' npx tsx scripts/pixelize-mon.ts <원본폴더> 키
   ...(process.env.TRY ? JSON.parse(process.env.TRY) : {}),
   // 노란 가운데의 음영이 바퀴살 같은 선으로 찍힌다. 안쪽 선은 갈색 팔에만, 노란 가운데·보석 둘레에는 경계선
