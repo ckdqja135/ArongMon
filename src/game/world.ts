@@ -282,12 +282,13 @@ export class World {
     return this.npcs.find((n) => !n.hidden && ((n.x === x && n.y === y) || (n.moving && n.fromX === x && n.fromY === y)));
   }
 
-  /** 플레이어가 지나갈 수 없는 사람: 마을·건물 안의 모든 사람, 이야기 때문에 길을 막는 사람(조건이 되면 사라진다), 포켓몬, 떨어진 도구, 아직 이기지 않은 트레이너.
+  /** 플레이어가 지나갈 수 없는 사람: 마을·건물 안의 모든 사람, 이야기 때문에 길을 막는 사람(조건이 되면 사라진다),
+   *  이야기를 들려주는 사람(용의 굴 장로처럼 스크립트가 있는 사람), 포켓몬, 떨어진 도구, 아직 이기지 않은 트레이너.
    *  도로·숲·동굴에 서 있는 그 밖의 사람과 이긴 트레이너는 지나갈 수 있다 */
   private solidNpc(n: NpcRt) {
     const d = n.def;
     if (!this.passThrough) return true;
-    if (d.hideIf || d.sprite === 'item' || 'mon' in d.sprite) return true;
+    if (d.hideIf || d.script || d.sprite === 'item' || 'mon' in d.sprite) return true;
     return !!d.trainer && !this.hooks.flag(`beat_${d.trainer.id}`);
   }
 
