@@ -355,7 +355,15 @@ const FRONT_OPTS: Record<string, Opts> = {
   // 몸의 줄무늬가 원본에 이미 있어 안쪽 선을 더하면 지저분하다. 연보라색을 살린다 (공식 일러스트로 찍는다)
   muk: { lines: false, sat: 1.4, size: 70 },
   // 머리카락 결이 안쪽 선으로 찍혀 지저분하다. 눈·입술 색은 살린다 (공식 일러스트로 찍는다)
-  jynx: { lines: false, rescue: 4 },
+  jynx: {
+    lines: false,
+    rescue: 4,
+    // 흰 눈 속 까만 눈동자
+    feats: [
+      { test: (r, g, b) => r + g + b < 200, frac: 0.16, color: [20, 16, 28], box: [24, 8, 39, 13] },
+      { test: (r, g, b) => r > 225 && g > 225 && b > 225, frac: 0.3, color: [255, 255, 255], box: [24, 8, 39, 13] },
+    ],
+  },
   // 설정을 바꿔 찍어 보기: TRY='{"키":{"size":70}}' npx tsx scripts/pixelize-mon.ts <원본폴더> 키
   ...(process.env.TRY ? JSON.parse(process.env.TRY) : {}),
   // 노란 가운데의 음영이 바퀴살 같은 선으로 찍힌다. 안쪽 선은 갈색 팔에만, 노란 가운데·보석 둘레에는 경계선

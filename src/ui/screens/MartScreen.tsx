@@ -92,7 +92,7 @@ function ItemList({ ids, price, count, onDone }: { ids: ItemId[]; price: (id: It
           visible={7}
         />
       </Frame>
-      <Frame className="bag-desc">{ids[cur] ? ITEMS[ids[cur]].desc : ''}</Frame>
+      <Frame className="mart-desc">{ids[cur] ? ITEMS[ids[cur]].desc : ''}</Frame>
     </div>
   );
 }

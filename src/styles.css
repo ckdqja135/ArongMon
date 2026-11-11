@@ -224,8 +224,10 @@ b { font-weight: normal; color: #2858a8; }
 .dex-text { left: 4px; right: 4px; bottom: 4px; height: 58px; white-space: pre-line; }
 
 /* 가게 */
-.money-box { left: 4px; top: 4px; width: 112px; }
-.mart-list { left: 120px; right: 4px; top: 4px; height: 128px; padding: 4px 6px 4px 3px; }
+.money-box { left: 4px; top: 4px; width: 96px; }
+.mart-list { left: 104px; right: 4px; top: 4px; height: 128px; padding: 4px 6px 4px 3px; }
+.mart-list .menu { padding-right: 8px; }
+.mart-desc { left: 4px; right: 4px; bottom: 4px; height: 48px; padding: 5px 8px; white-space: pre-line; }
 .mart-list .cnt { color: #8890a8; }
 
 /* 트레이너 카드 */
