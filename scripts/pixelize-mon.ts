@@ -67,8 +67,11 @@ function sharpen(img: Img, amount: number): Img {
   return { w, h, data: out };
 }
 
-/** 미디언 컷으로 색을 n개로 줄인다. cut보다 덜 칠해진 칸은 지운다 */
-function quantize(img: Img, n: number, cut = 128) {
+/**
+ * 미디언 컷으로 색을 n개로 줄인다. cut보다 덜 칠해진 칸은 지운다.
+ * rescue: 고른 색 어느 것과도 많이 다른 작은 무늬(분홍 코처럼 넓이가 작아 묻힌 색)를 이만큼까지 따로 살린다
+ */
+function quantize(img: Img, n: number, cut = 128, rescue = 0) {
   const px: number[][] = [];
   for (let i = 0; i < img.w * img.h; i++) if (img.data[i * 4 + 3] >= cut) px.push([img.data[i * 4], img.data[i * 4 + 1], img.data[i * 4 + 2]]);
   let boxes = [px];
@@ -89,6 +92,18 @@ function quantize(img: Img, n: number, cut = 128) {
     boxes.splice(best, 1, bx.slice(0, mid), bx.slice(mid));
   }
   const pal = boxes.map((bx) => [0, 1, 2].map((c) => bx.reduce((s, p) => s + p[c], 0) / bx.length));
+  const dist = (a: number[], b: number[]) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
+  if (rescue) {
+    const groups: { sum: number[]; n: number }[] = [];
+    for (const p of px) {
+      if (Math.min(...pal.map((q) => dist(p, q))) < 22 ** 2) continue;
+      const g = groups.find((g) => dist(p, g.sum.map((v) => v / g.n)) < 22 ** 2);
+      if (g) { g.sum = g.sum.map((v, c) => v + p[c]); g.n++; }
+      else groups.push({ sum: [...p], n: 1 });
+    }
+    groups.sort((a, b) => b.n - a.n);
+    for (const g of groups.slice(0, rescue)) if (g.n >= 3) pal.push(g.sum.map((v) => v / g.n));
+  }
   for (let i = 0; i < img.w * img.h; i++) {
     const o = i * 4;
     if (img.data[o + 3] < cut) { img.data[o + 3] = 0; continue; }
@@ -154,6 +169,25 @@ function innerLines(img: Img, frac: Float32Array, minFrac: number) {
   for (const o of marks) for (let c = 0; c < 3; c++) data[o + c] *= 0.55;
 }
 
+/** 진한 무늬(눈썹·눈동자·팔찌처럼 원본에서 정말 어두운 곳)가 칸의 frac 이상이면 그 칸을 어둡게. 음영 잔주름은 건드리지 않는다 */
+function darkFeatures(src: Img, img: Img, frac: number) {
+  const sx = src.w / img.w, sy = src.h / img.h;
+  for (let ty = 0; ty < img.h; ty++)
+    for (let tx = 0; tx < img.w; tx++) {
+      const o = (ty * img.w + tx) * 4;
+      if (!img.data[o + 3]) continue;
+      let dark = 0, n = 0;
+      for (let y = Math.floor(ty * sy); y < Math.min(src.h, Math.ceil((ty + 1) * sy)); y++)
+        for (let x = Math.floor(tx * sx); x < Math.min(src.w, Math.ceil((tx + 1) * sx)); x++) {
+          const i = (y * src.w + x) * 4;
+          if (src.data[i + 3] < 128) continue;
+          n++;
+          if (lum(src.data, i) < 64) dark++;
+        }
+      if (n && dark / n >= frac && lum(img.data, o) > 70) for (let c = 0; c < 3; c++) img.data[o + c] = img.data[o + c] * 0.3 + 24 * 0.7;
+    }
+}
+
 /** 투명한 곳과 닿은 가장자리를 진하게 칠해 도트 외곽선을 만든다 */
 function outline(img: Img) {
   const { w, h, data } = img;
@@ -168,16 +202,29 @@ function outline(img: Img) {
 /** size는 가로·세로 평균의 목표 길이 (팔을 벌린 꼬마돌처럼 납작한 그림도 몸이 작아지지 않게), cap은 칸 크기 */
 const TUNE = { edge: Number(process.env.EDGE ?? 16), frac: Number(process.env.FRAC ?? 0.15), sat: Number(process.env.SAT ?? 1.15), contrast: Number(process.env.CONTRAST ?? 1.08) };
 
-/** cut: 줄인 칸이 이만큼 칠해져야 남긴다. 작은 그림은 낮춰서 가는 꼬리·팔다리가 끊기지 않게 */
-function pixelize(src: Img, size: number, cap: number, colors: number, cut = 128): Img {
+interface Opts {
+  /** 줄인 칸이 이만큼 칠해져야 남긴다. 작은 그림은 낮춰서 가는 꼬리·팔다리가 끊기지 않게 */
+  cut?: number;
+  /** 묻히기 쉬운 작은 무늬 색을 몇 개까지 따로 살릴지 */
+  rescue?: number;
+  /** 안쪽 선을 넣을지 (매끈한 몸에 잔주름처럼 생기는 그림은 끈다) */
+  lines?: boolean;
+  /** 안쪽 선 대신 정말 어두운 무늬만 살린다 (칸에 섞인 비율) */
+  dark?: number;
+  /** 채도 (작은 무늬 색이 바탕에 묻히는 그림은 올린다) */
+  sat?: number;
+}
+
+function pixelize(src: Img, size: number, cap: number, colors: number, { cut = 128, rescue = 0, lines = true, dark = 0, sat = TUNE.sat }: Opts = {}): Img {
   const s = Math.min(size / ((src.w + src.h) / 2), cap / Math.max(src.w, src.h));
   const tw = Math.max(1, Math.round(src.w * s)), th = Math.max(1, Math.round(src.h * s));
   const img = shrink(src, tw, th);
-  vivid(img, TUNE.sat, TUNE.contrast);
+  vivid(img, sat, TUNE.contrast);
   const sharp = sharpen(img, size >= 40 ? 0.45 : 0.25);
-  quantize(sharp, colors, cut);
+  quantize(sharp, colors, cut, rescue);
   // 작은 그림(아이콘·필드)은 안쪽 선을 넣으면 뭉개지므로 큰 그림에만
-  if (size >= 40) innerLines(sharp, edgeFraction(src, tw, th, TUNE.edge), TUNE.frac);
+  if (size >= 40 && lines) innerLines(sharp, edgeFraction(src, tw, th, TUNE.edge), TUNE.frac);
+  if (dark) darkFeatures(src, sharp, dark);
   outline(sharp);
   return sharp;
 }
@@ -197,6 +244,17 @@ function fill(img: Img) {
 /** 필드 그림 크기: 가늘게 뻗은 그림(라이츄처럼 꼬리가 긴 녀석)은 몸이 앙상해지지 않게 최대 1.25배까지 키운다 */
 const fieldTarget = (img: Img, height: number) => Math.min(24, Math.round(fieldSize(height) * Math.min(1.25, Math.max(1, Math.sqrt(0.5 / fill(img))))));
 
+/** 필드 그림을 손으로 찍어 둔 종족 (다시 만들지 않는다): 원본 자세 그대로 줄이면 앙상해지는 녀석들 */
+const HAND_FIELD = new Set(['raichu']);
+
+/** 종족마다 따로 맞춘 배틀 그림 설정 */
+const FRONT_OPTS: Record<string, Opts> = {
+  // 매끈한 몸의 음영이 바퀴살 같은 선으로 찍힌다
+  staryu: { lines: false },
+  // 털 질감이 얼굴에 낙서처럼 찍히고 눈·분홍 코가 묻힌다
+  primeape: { lines: false, dark: 0.25, rescue: 4, sat: 1.35 },
+};
+
 const [srcDir, only] = process.argv.slice(2);
 if (!srcDir) throw new Error('원본 폴더를 주세요');
 const want = only?.split(',');
@@ -205,15 +263,15 @@ for (const sp of Object.values(SPECIES)) {
   const dir = `src/assets/mon/${sp.key}`;
   mkdirSync(dir, { recursive: true });
   const normal = crop(load(`${srcDir}/${sp.no}.png`));
-  save(pixelize(normal, frontSize(sp.height), 78, 16), `${dir}/front.png`);
+  save(pixelize(normal, frontSize(sp.height), 78, 16, FRONT_OPTS[sp.key]), `${dir}/front.png`);
   save(pixelize(normal, 26, 30, 16), `${dir}/icon.png`);
   // 필드 그림은 목표 크기를 넘지 않게 (게임에서 한 번 더 줄이면 픽셀이 빠져 앙상해진다)
   const fs = fieldTarget(normal, sp.height);
-  save(pixelize(normal, fs, fs, 10, 64), `${dir}/field.png`);
+  if (!HAND_FIELD.has(sp.key)) save(pixelize(normal, fs, fs, 10, { cut: 64 }), `${dir}/field.png`);
   const shinyPath = `${srcDir}/shiny/${sp.no}.png`;
   if (existsSync(shinyPath)) {
     const shiny = crop(load(shinyPath));
-    save(pixelize(shiny, frontSize(sp.height), 78, 16), `${dir}/front-shiny.png`);
+    save(pixelize(shiny, frontSize(sp.height), 78, 16, FRONT_OPTS[sp.key]), `${dir}/front-shiny.png`);
     save(pixelize(shiny, 26, 30, 16), `${dir}/icon-shiny.png`);
   }
   console.log(sp.key);
