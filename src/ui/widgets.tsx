@@ -147,7 +147,7 @@ export function Menu({ items, onSelect, onCancel, initial = 0, columns = 1, acti
   return (
     <div className={`menu ${className}`} style={{ ...style, gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
       {rows.map((it, k) => (
-        <div key={k + offset} className={`item${it.disabled ? ' disabled' : ''}`}>
+        <div key={k + offset} className={`item${it.disabled ? ' disabled' : ''}${k + offset === i ? ' sel' : ''}`}>
           <span className="cursor">{k + offset === i ? '▶' : ''}</span>
           {it.label}
         </div>

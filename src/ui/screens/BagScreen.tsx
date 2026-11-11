@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { canUseOn, useItemOn } from '../../battle/itemUse';
 import { monName, type Mon } from '../../battle/mon';
 import { RODS, type RodId } from '../../data/fishing';
 import { ITEMS, itemData, type ItemId, type Pocket } from '../../data/items';
-import { MOVES } from '../../data/moves';
+import { MOVES, type MoveId } from '../../data/moves';
+import { isSpecial } from '../../data/types';
 import { canLearnTM } from '../../data/tms';
 import { josa } from '../../engine/josa';
 import { useButtons } from '../../engine/input';
 import { G } from '../../game/game';
+import { bagCanvas, itemIconCanvas, pocketIconCanvas } from '../../gfx/bagArt';
+import { paint } from '../../gfx/sprites';
 import { openOverlay } from '../overlay';
 import { yesNo } from '../dialog';
-import { Frame, Menu } from '../widgets';
+import { Frame, Menu, TypeTag } from '../widgets';
 import { openMap } from './MapScreen';
 import { openParty } from './PartyScreen';
 
@@ -156,39 +159,69 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
     } else setSub(null);
   };
 
+  const tm = sel ? itemData(sel).tm : undefined;
   return (
     <div className="panel bag">
-      <div className="bag-pocket">
-        ◀ <b>{POCKETS[pocket].name}</b> ▶
+      <div className="bag-title">가방</div>
+      <Pic key={pocket} className="bag-art" src={bagCanvas(POCKETS[pocket].id)} />
+      <div className="bag-pockets">
+        <div className="bag-tabs">
+          <span className="bag-arrow">◀</span>
+          {POCKETS.map((q, k) => (
+            <Pic key={q.id} className={`bag-tab${k === pocket ? ' on' : ''}`} src={pocketIconCanvas(q.id)} />
+          ))}
+          <span className="bag-arrow">▶</span>
+        </div>
+        <div className="bag-pocket-name">{POCKETS[pocket].name}</div>
       </div>
-      <Frame className="bag-list">
-        {list.length ? (
-          <Menu
-            key={pocket}
-            items={[
-              ...list.map((id) => ({
-                label: (
-                  <span className="item-row">
-                    <span className="grow">{ITEMS[id].name}</span>
-                    {itemData(id).tm ? <span className="small">{MOVES[itemData(id).tm!].name}</span> : ITEMS[id].pocket !== 'key' && <span>×{bag[id]}</span>}
-                  </span>
-                ),
-              })),
-              '닫기',
-            ]}
-            initial={Math.min(cur, list.length)}
-            onMove={setCur}
-            onSelect={(k) => (k === list.length ? onDone(null) : setSub(list[k]))}
-            onCancel={() => onDone(null)}
-            visible={7}
-            active={!sub && !msg}
-            onButton={switchPocket}
-          />
+      <div className="bag-list-wrap">
+        <Frame className="bag-list">
+          {list.length ? (
+            <Menu
+              key={pocket}
+              items={[
+                ...list.map((id) => ({
+                  label: (
+                    <span className="item-row">
+                      {itemData(id).tm ? (
+                        <>
+                          <span className="tm-no">No.{ITEMS[id].name.slice(-2)}</span>
+                          <span className="grow">{MOVES[itemData(id).tm!].name}</span>
+                        </>
+                      ) : (
+                        <span className="grow">{ITEMS[id].name}</span>
+                      )}
+                      {ITEMS[id].pocket !== 'key' && ITEMS[id].pocket !== 'tm' && <span>x{bag[id]}</span>}
+                    </span>
+                  ),
+                })),
+                '닫기',
+              ]}
+              initial={Math.min(cur, list.length)}
+              onMove={setCur}
+              onSelect={(k) => (k === list.length ? onDone(null) : setSub(list[k]))}
+              onCancel={() => onDone(null)}
+              visible={7}
+              active={!sub && !msg}
+              onButton={switchPocket}
+            />
+          ) : (
+            <div className="empty">아무것도 없다.</div>
+          )}
+        </Frame>
+      </div>
+      <div className="bag-info">
+        {msg ? (
+          <div className="bag-text wide">{msg}</div>
+        ) : tm ? (
+          <TmInfo move={tm} />
         ) : (
-          <div className="empty">아무것도 없다.</div>
+          <>
+            {sel && <Pic className="bag-icon" src={itemIconCanvas(sel)} />}
+            <div className={`bag-text${sel ? '' : ' wide'}`}>{sel ? ITEMS[sel].desc : '가방을 닫는다.'}</div>
+          </>
         )}
-      </Frame>
-      <Frame className="bag-desc">{msg ?? (sel ? ITEMS[sel].desc : '가방을 닫는다.')}</Frame>
+      </div>
       {!list.length && !msg && !sub && <EmptyPocket onButton={switchPocket} onDone={() => onDone(null)} />}
       {msg && <Dismiss onDone={() => setMsg(null)} />}
       {sub && (
@@ -198,6 +231,35 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
       )}
     </div>
   );
+}
+
+/** 기술머신: 가르치는 기술의 타입·분류·PP·위력·명중 */
+function TmInfo({ move }: { move: MoveId }) {
+  const m = MOVES[move];
+  const kind = m.power === 0 ? '변화' : isSpecial(m.type) ? '특수' : '물리';
+  return (
+    <div className="bag-tm">
+      <span className="k">타입</span>
+      <TypeTag type={m.type} />
+      <span className="k">분류</span>
+      <span className={`kind k-${kind}`}>{kind}</span>
+      <span className="k">PP</span>
+      <span>{m.pp}</span>
+      <span className="k">위력</span>
+      <span>{m.power || '-'}</span>
+      <span />
+      <span />
+      <span className="k">명중</span>
+      <span>{m.acc || '-'}</span>
+    </div>
+  );
+}
+
+/** 미리 그린 캔버스를 그대로 보여 준다 */
+function Pic({ src, className }: { src: HTMLCanvasElement; className?: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => paint(ref.current, src), [src]);
+  return <canvas ref={ref} className={`pix ${className ?? ''}`} />;
 }
 
 function EmptyPocket({ onButton, onDone }: { onButton: (b: string) => void; onDone: () => void }) {
