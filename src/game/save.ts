@@ -82,8 +82,8 @@ function migrate(s: SaveData): SaveData {
   s.seen = [...new Set(s.seen.map(sp))];
   s.caught = [...new Set(s.caught.map(sp))];
   if (s.rivalStarter) s.rivalStarter = sp(s.rivalStarter);
-  // 포켓기어가 생기기 전에 시작한 기록: 엄마가 준 셈 친다
-  if (s.flags.talkedMom && !s.bag.pokegear) s.bag.pokegear = 1;
+  // 포켓기어가 생기기 전에 시작했거나 엄마와 이야기하지 않고 떠난 기록: 엄마가 준 셈 친다
+  if (!s.bag.pokegear && (s.flags.talkedMom || s.flags.starter || s.party.length)) s.bag.pokegear = 1;
   // 기술머신이 생기기 전에 딴 배지: 관장이 주는 기술머신을 챙겨 준다
   for (const b of s.badges) if (BADGE_TM[b] && !s.bag[BADGE_TM[b]]) s.bag[BADGE_TM[b]] = 1;
   // 공중날기가 생기기 전에 딴 주먹배지: 무쇠가 주는 공중날기를 챙겨 준다

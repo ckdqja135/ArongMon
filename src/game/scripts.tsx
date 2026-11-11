@@ -107,11 +107,11 @@ export const SCRIPTS: Record<string, Script> = {
       await say(`엄마: ${josa(P(), '아/야')}, 일어났구나!\n느티 박사님이 널 찾으셨단다.`);
       await say('박사님 연구소는 마을 오른쪽\n초록 지붕 건물이야.');
       await say('아롱이도 너를 따라가고 싶은지\n아까부터 신이 나 있더라.');
-      await say('엄마: 참, 이것도 가져가렴.\n전화를 걸 수 있는 포켓기어란다.');
+      await say('엄마: 참, 이것도 가져가렴.\n전화와 지도가 든 포켓기어란다.');
       G.addItem('pokegear');
       sfx('item');
       await say(`${josa(P(), '은/는')} 포켓기어를 받았다!`);
-      await say('엄마: 무슨 일 있으면 언제든\n전화하렴. START 메뉴에 있단다.');
+      await say('엄마: 전화와 지도는 START 메뉴에\n있단다. 무슨 일 있으면 전화하렴.');
       return;
     }
     if (!G.flag('starter')) {
@@ -123,6 +123,13 @@ export const SCRIPTS: Record<string, Script> = {
     G.save.lastHeal = { map: 'home', x: 3, y: 4, dir: 'up' };
     await say('포켓몬들이 기운을 되찾았다!');
     await say('엄마: 몸조심하고, 다녀오렴!');
+  },
+
+  /** 엄마와 이야기하지 않고 집을 나가려 할 때 */
+  async momStop() {
+    if (G.flag('talkedMom')) return;
+    await say('엄마: 잠깐! 엄마 얘기도\n안 듣고 나가려고?');
+    await SCRIPTS.mom();
   },
 
   async arongHome() {

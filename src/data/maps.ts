@@ -207,6 +207,8 @@ export const MAPS: Record<string, MapDef> = {
     border: 'X',
     tiles: ['========', 'BB___&MZ', '________', '__&&____', 'P______P', '___E____'],
     warps: doorWarps('home'),
+    // 엄마와 이야기하지 않고 나가려 하면 불러 세워 포켓기어를 준다
+    triggers: [{ x: 3, y: 5, script: 'momStop' }],
     npcs: [
       { id: 'mom', x: 1, y: 3, dir: 'right', sprite: { base: 'long', pal: 'mom' }, script: 'mom' },
       { id: 'arongHome', x: 5, y: 3, dir: 'down', sprite: { mon: 'arong' }, move: 'wander', script: 'arongHome', hideIf: 'arongJoined' },
