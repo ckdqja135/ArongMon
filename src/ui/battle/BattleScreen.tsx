@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { PlayerAction } from '../../battle/engine';
 import { STATUS_SHORT, calcStats, expForLevel, isShiny, monName, spec, type Mon, type MoveSlot } from '../../battle/mon';
 import type { BattleSession, SideView } from '../../battle/session';
+import { floats } from '../../data/monMotion';
 import { MOVES, type MoveData } from '../../data/moves';
 import { SPECIES } from '../../data/species';
 import { effectiveness, type Type } from '../../data/types';
@@ -91,10 +92,6 @@ function Backdrop({ terrain, time }: { terrain: BattleTerrain; time: BattleTime 
     </>
   );
 }
-
-/** 둥실둥실 떠 있는 포켓몬: 비행·고스트 타입과 몸이 떠 있는 녀석들 */
-const FLOATERS = new Set(['koffing', 'weezing', 'magnemite', 'magneton', 'geodude', 'porygon', 'mew', 'venomoth', 'beedrill', 'voltorb', 'electrode']);
-const floats = (species: string) => FLOATERS.has(species) || SPECIES[species].types.some((t) => t === 'flying' || t === 'ghost');
 
 function BattlerSprite({ side, view, className, ball = 'capsule' }: { side: SideView; view: 'front' | 'back'; className: string; ball?: BallId }) {
   const m = side.mon;

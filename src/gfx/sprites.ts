@@ -6,6 +6,8 @@ import { battleBgGrid, platformGrid, type BattleTerrain, type BattleTime } from 
 import { artPending, fieldBox, loadMonArt, monOverride } from './monOverrides';
 import { ballGrid, ballPalette, groundBallGrid, smallBallGrid, type BallId } from './ballArt';
 import { EGG, EGG_PAL } from './eggArt';
+import { backView, walkFrame, type FieldView } from './fieldWalk';
+import { gait } from '../data/monMotion';
 import { CHAR_H, CHAR_W, EXCLAIM, charFrame, type CharBase, type Dir } from './charArt';
 import { DESIGN_SIZE, renderBack, renderFront, renderIcon, renderMonster } from './monsterArt';
 import { CHAR_PAL, PAL, type CharPalName } from './palettes';
@@ -114,15 +116,18 @@ export function monFieldCanvas(species: string, dir: Dir, frame: 0 | 1 | 2 = 0):
   if (hasFieldArt(species)) {
     return cached(`mf:${species}:${dir}:${frame}`, () => gridCanvas(arongFieldFrame(species, dir, frame), ARONG_FIELD_PAL));
   }
-  // 그 밖의 몬스터는 앞모습을 키에 비례해 줄여서 쓴다 (11~24px, 오른쪽을 볼 때만 뒤집는다)
-  const flip = dir === 'right';
-  return cached(`mf:${species}:${flip ? 1 : 0}`, () => {
-    const o = monOverride(species, 'field');
-    if (o) return fromOverride(o, false, flip);
-    const size = fieldBox(species);
-    const g = renderMonster(MON_ART[species], { size, scale: (size / DESIGN_SIZE) * 1.05, dx: -0.6, dy: -1, mirror: flip });
-    return gridCanvas(g, monPalette(species));
-  });
+  // 그 밖의 포켓몬은 앞모습을 키에 비례해 줄여서 쓴다 (11~24px). 오른쪽을 볼 때는 뒤집고, 위를 볼 때는 뒷모습을 만든다
+  const view: FieldView = dir === 'up' ? 'back' : dir === 'down' ? 'front' : 'side';
+  const still = (flip: boolean) =>
+    cached(`mf:${species}:${flip ? 1 : 0}`, () => {
+      const o = monOverride(species, 'field');
+      if (o) return fromOverride(o, false, flip);
+      const size = fieldBox(species);
+      const g = renderMonster(MON_ART[species], { size, scale: (size / DESIGN_SIZE) * 1.05, dx: -0.6, dy: -1, mirror: flip });
+      return gridCanvas(g, monPalette(species));
+    });
+  const base = view === 'back' ? cached(`mf:${species}:back`, () => backView(still(false))) : still(dir === 'right');
+  return frame ? cached(`mf:${species}:${dir}:${frame}`, () => walkFrame(base, view, gait(species), frame)) : base;
 }
 
 /** 발밑 그림자 (DS 시절처럼 반투명 타원) */

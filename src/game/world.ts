@@ -8,6 +8,7 @@ import {
   CHAR_SIZE, SCREEN_H, SCREEN_W, TILE, arongRiderCanvas, bikeCanvas, charCanvas, exclaimCanvas, grassOverlay, heartCanvas, monFieldCanvas, groundBallCanvas, shadowCanvas, tileCanvas, tubeCanvas,
 } from '../gfx/sprites';
 import { hasFieldArt } from '../gfx/arongField';
+import { gait } from '../data/monMotion';
 import { TILES, tileVariant, type TileDef } from '../gfx/tileArt';
 
 export const DIR_V: Record<Dir, [number, number]> = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
@@ -663,11 +664,13 @@ export class World {
       if (sprite === 'item') {
         ctx.drawImage(groundBallCanvas(), sx, sy);
       } else if ('mon' in sprite) {
-        const drawn = hasFieldArt(sprite.mon);
-        // 그려 둔 걸음 그림이 있으면 발을 번갈아 딛고, 서 있을 때도 가끔 발을 구른다. 없으면 통통 튀기만 한다
-        const fidget = !a.moving && (this.time + a.x * 0.37 + a.y * 0.61) % 1.6 < 0.22;
-        const bob = a.moving ? Math.round(Math.sin(a.t * Math.PI) * (drawn ? 1 : 2)) : 0;
-        const c = monFieldCanvas(sprite.mon, a.dir, drawn ? (fidget ? 1 : walkFrame) : 0);
+        const g = hasFieldArt(sprite.mon) ? 'legs' : gait(sprite.mon);
+        // 걸을 때는 발을 번갈아 딛고(다리가 없으면 몸을 움츠리고), 서 있을 때도 가끔 발을 구른다.
+        // 가만히 서 있는 포켓몬(길을 막은 잠만보 등)은 구르지 않는다. 떠 있는 포켓몬은 그림자 위에서 둥실거린다
+        const fidget = !a.moving && (!npc || npc.def.move === 'wander' || hasFieldArt(sprite.mon)) && (this.time + a.x * 0.37 + a.y * 0.61) % 1.6 < 0.22;
+        const bob =
+          g === 'float' ? 3 + Math.round(Math.sin(this.time * 3 + a.x) * 1.5) : g === 'legs' && a.moving ? Math.round(Math.sin(a.t * Math.PI)) : 0;
+        const c = monFieldCanvas(sprite.mon, a.dir, g === 'float' ? 0 : fidget ? 1 : walkFrame);
         if (c) ctx.drawImage(c, sx + TILE / 2 - c.width / 2, sy + TILE - c.height - bob);
       } else if (swimming && 'base' in sprite) {
         // 물 위: 윗몸만 그리고 허리에 튜브를 끼운다. 물결에 맞춰 살짝 출렁인다
