@@ -381,6 +381,8 @@ const FRONT_OPTS: Record<string, Opts> = {
       [29, 12, 'up'], [30, 12, 'up'], [31, 12, 'up'], [32, 12, 'up'],
     ],
   },
+  // 연한 크림색에 꼬리 끝 주황과 빨간 눈이 묻힌다 (공식 일러스트로 찍는다)
+  ninetales: { rescue: 4, sat: 1.25, size: 64, feats: [{ test: (r, g, b) => r > 170 && g < 110 && b < 110, frac: 0.08, color: [200, 40, 40] }] },
   // 설정을 바꿔 찍어 보기: TRY='{"키":{"size":70}}' npx tsx scripts/pixelize-mon.ts <원본폴더> 키
   ...(process.env.TRY ? JSON.parse(process.env.TRY) : {}),
   // 노란 가운데의 음영이 바퀴살 같은 선으로 찍힌다. 안쪽 선은 갈색 팔에만, 노란 가운데·보석 둘레에는 경계선
