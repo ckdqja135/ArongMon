@@ -1,6 +1,7 @@
 // 고해상도 몬스터 그림(Pokémon HOME 그림)을 아롱이와 같은 도트 그림으로 다시 찍는다.
 // 부드럽게 줄이기 → 살짝 선명하게 → 반투명 없애기 → 색 줄이기 → 가장자리 한 칸을 진하게 (외곽선)
 // 사용: npx tsx scripts/pixelize-mon.ts <원본폴더> [종족키,...]
+//   scratch/art/<도감번호>.png가 있으면 그 종족은 그 그림(공식 일러스트)으로 찍는다
 //   원본폴더/<도감번호>.png, 원본폴더/shiny/<도감번호>.png (PokeAPI sprites의 other/home)
 // 출력: src/assets/mon/<키>/front.png, front-shiny.png, icon.png, icon-shiny.png, field.png
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -330,8 +331,10 @@ const HAND_FIELD = new Set(['raichu']);
 
 /** 종족마다 따로 맞춘 배틀 그림 설정 */
 const FRONT_OPTS: Record<string, Opts> = {
-  // 불꽃 갈기·꼬리가 넓게 퍼져 말 몸통과 뿔이 작아진다
+  // 불꽃 갈기·꼬리가 넓게 퍼져 말 몸통과 뿔이 작아진다 (공식 일러스트로 찍는다)
   rapidash: { size: 72 },
+  // 고양이 몸이 길게 뻗어 얼굴이 작다: 크게 찍고 눈매를 살린다 (공식 일러스트로 찍는다)
+  persian: { size: 66, feats: [{ test: (r, g, b) => r + g + b < 260, frac: 0.1, color: [40, 30, 30] }] },
   // 설정을 바꿔 찍어 보기: TRY='{"키":{"size":70}}' npx tsx scripts/pixelize-mon.ts <원본폴더> 키
   ...(process.env.TRY ? JSON.parse(process.env.TRY) : {}),
   // 노란 가운데의 음영이 바퀴살 같은 선으로 찍힌다. 안쪽 선은 갈색 팔에만, 노란 가운데·보석 둘레에는 경계선
@@ -365,7 +368,9 @@ for (const sp of Object.values(SPECIES)) {
   if (sp.no < 1 || sp.no > 151 || (want && !want.includes(sp.key))) continue;
   const dir = `src/assets/mon/${sp.key}`;
   mkdirSync(dir, { recursive: true });
-  const normal = crop(load(`${srcDir}/${sp.no}.png`));
+  // HOME 3D 그림이 원근 때문에 일그러져 보이는 종족은 scratch/art/<도감번호>.png (공식 일러스트)를 대신 쓴다
+  const art = `scratch/art/${sp.no}.png`;
+  const normal = crop(load(existsSync(art) ? art : `${srcDir}/${sp.no}.png`));
   const fo = FRONT_OPTS[sp.key];
   save(pixelize(normal, fo?.size ?? frontSize(sp.height), 78, 16, fo), `${dir}/front.png`);
   save(pixelize(normal, 26, 30, 16), `${dir}/icon.png`);
