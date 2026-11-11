@@ -9,7 +9,7 @@ import { openParty } from './PartyScreen';
 export async function openPC() {
   await say(`${josa(G.player, '은/는')} PC의\n스위치를 켰다!`);
   for (;;) {
-    const c = await ask('몬스터 보관 시스템에\n접속했습니다.', ['몬스터 맡기기', '몬스터 꺼내기', '로그아웃'], 2);
+    const c = await ask('포켓몬 보관 시스템에\n접속했습니다.', ['포켓몬 맡기기', '포켓몬 꺼내기', '로그아웃'], 2);
     if (c === 0) await deposit();
     else if (c === 1) await withdraw();
     else break;
@@ -19,14 +19,14 @@ export async function openPC() {
 async function deposit() {
   const party = G.save.party;
   if (party.length <= 1) {
-    await say('마지막 몬스터는\n맡길 수 없습니다!');
+    await say('마지막 포켓몬은\n맡길 수 없습니다!');
     return;
   }
-  const i = await openParty({ mode: 'select', title: '어느 몬스터를 맡길까?' });
+  const i = await openParty({ mode: 'select', title: '어느 포켓몬을 맡길까?' });
   if (i === null) return;
   const m = party[i];
   if (party.filter((p, k) => k !== i && canFight(p)).length === 0) {
-    await say('싸울 수 있는 몬스터가\n남지 않게 됩니다!');
+    await say('싸울 수 있는 포켓몬이\n남지 않게 됩니다!');
     return;
   }
   party.splice(i, 1);
@@ -37,7 +37,7 @@ async function deposit() {
 async function withdraw() {
   const box = G.save.box;
   if (!box.length) {
-    await say('박스에 몬스터가 없습니다.');
+    await say('박스에 포켓몬이 없습니다.');
     return;
   }
   if (G.save.party.length >= PARTY_MAX) {

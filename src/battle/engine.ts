@@ -47,7 +47,7 @@ export interface BattleOpts {
 
 export interface BattleResult {
   outcome: 'win' | 'lose' | 'run' | 'caught';
-  /** 이번 배틀에서 레벨이 오른 몬스터 (진화 확인용) */
+  /** 이번 배틀에서 레벨이 오른 포켓몬 (진화 확인용) */
   leveled: Mon[];
   prize: number;
 }
@@ -81,7 +81,7 @@ export interface BattleCtx {
   party: Mon[];
   bag: Partial<Record<ItemId, number>>;
   onSeen(species: string): void;
-  /** 잡은 몬스터를 보관하고 안내 문구를 돌려준다 */
+  /** 잡은 포켓몬을 보관하고 안내 문구를 돌려준다 */
   onCaught(mon: Mon): Promise<void>;
 }
 
@@ -118,7 +118,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
 
   const act = (s: Side) => s.party[s.active];
   const other = (s: Side) => (s === P ? E : P);
-  // 변신 중이면 HP만 자기 것이고 능력치·타입·기술은 따라 한 몬스터의 것
+  // 변신 중이면 HP만 자기 것이고 능력치·타입·기술은 따라 한 포켓몬의 것
   const statsOf = (s: Side): Stats => (s.form ? { ...s.form.stats, hp: calcStats(act(s)).hp } : calcStats(act(s)));
   const typesOf = (s: Side): readonly Type[] => SPECIES[s.form?.species ?? act(s).species].types;
   const movesOf = (s: Side) => s.form?.moves ?? act(s).moves;
@@ -173,7 +173,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
       if (it.ball) {
         if (!wild) {
           await say(`${josa(ctx.playerName, '은/는')} ${josa(it.name, '을/를')}\n던졌다!`);
-          await say('트레이너가 볼을 쳐냈다!\n남의 몬스터는 잡을 수 없다!');
+          await say('트레이너가 볼을 쳐냈다!\n남의 포켓몬은 잡을 수 없다!');
         } else if (await throwBall(it.ball, it.name, action.item)) {
           return result('caught');
         }
@@ -645,7 +645,7 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
     }
     await io.anim(1, 'breakout');
     await say(
-      shakes === 0 ? '앗! 몬스터가 볼에서\n나와 버렸다!' : shakes === 1 ? '아앗! 잡았다고\n생각했는데!' : '아쉽다! 조금만 더 하면\n잡을 수 있었는데!',
+      shakes === 0 ? '앗! 포켓몬이 볼에서\n나와 버렸다!' : shakes === 1 ? '아앗! 잡았다고\n생각했는데!' : '아쉽다! 조금만 더 하면\n잡을 수 있었는데!',
     );
     return false;
   }
@@ -682,11 +682,11 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
       await say(`${lj(P, '은/는')}\n쓰러졌다!`);
       participants.delete(P.active);
       if (!P.party.some(canFight)) {
-        await say(`${ctx.playerName}에게는 싸울 수 있는\n몬스터가 없다!`);
+        await say(`${ctx.playerName}에게는 싸울 수 있는\n포켓몬이 없다!`);
         await say(`${josa(ctx.playerName, '은/는')}\n눈앞이 캄캄해졌다!`);
         return result('lose');
       }
-      if (wild && !(await io.yesNo('다음 몬스터를\n쓰겠습니까?'))) {
+      if (wild && !(await io.yesNo('다음 포켓몬을\n쓰겠습니까?'))) {
         if (canEscape()) {
           await say('무사히 도망쳤다!');
           return result('run');

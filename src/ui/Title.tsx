@@ -53,15 +53,15 @@ function Intro({ onDone }: { onDone: () => void }) {
     if (started.current) return;
     started.current = true;
     void (async () => {
-      await say('안녕! 몬스터의 세계에\n잘 왔단다!');
+      await say('안녕! 포켓몬의 세계에\n잘 왔단다!');
       await say('나는 느티. 사람들은 나를\n느티 박사라고 부르지.');
-      await say('이 세계에는 몬스터라 불리는\n신기한 생물들이 살고 있단다.');
-      await say('사람과 몬스터는 함께 놀고,\n함께 싸우며, 서로 도우며 살지.');
+      await say('이 세계에는 포켓몬이라 불리는\n신기한 생물들이 살고 있단다.');
+      await say('사람과 포켓몬은 함께 놀고,\n함께 싸우며, 서로 도우며 살지.');
       await say('그럼 너에 대해 알려 주겠니?\n이름이 뭐니?');
       const name = await askName('너의 이름은?', '아롱');
       await say(`${name}! 좋은 이름이구나.`);
       await say('너와 아롱이의 이야기가\n지금 시작된다!');
-      await say('몬스터의 세계로\n출발!');
+      await say('포켓몬의 세계로\n출발!');
       onDone();
       G.startNew(name);
     })();

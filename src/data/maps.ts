@@ -66,9 +66,9 @@ export interface MapDef {
   signs?: { x: number; y: number; text: string }[];
   /** 밟으면 실행되는 스크립트 */
   triggers?: { x: number; y: number; script: string }[];
-  /** surf: 파도타기 중에 물 위에서 나오는 몬스터 */
+  /** surf: 파도타기 중에 물 위에서 나오는 포켓몬 */
   encounters?: { rate: number; surf?: Encounter[] } & Partial<Record<TimeOfDay, Encounter[]>>;
-  /** 낚시로 낚이는 몬스터 (물이 있는 맵, 없으면 민물) */
+  /** 낚시로 낚이는 포켓몬 (물이 있는 맵, 없으면 민물) */
   fish?: FishSpot;
   /** 배경음악 (없으면 장소 종류로 정한다) */
   music?: string;
@@ -189,10 +189,10 @@ export const MAPS: Record<string, MapDef> = {
     warps: doorWarps('sprout'),
     npcs: [
       { id: 'girl', x: 12, y: 9, sprite: { base: 'long', pal: 'green' }, move: 'wander',
-        text: '느티 박사님은 몬스터 연구로\n유명한 분이야!\n연구소는 저기 초록 지붕이야.' },
+        text: '느티 박사님은 포켓몬 연구로\n유명한 분이야!\n연구소는 저기 초록 지붕이야.' },
       { id: 'sproutMew', x: 3, y: 14, dir: 'down', sprite: { mon: 'mew' }, move: 'wander', script: 'mew', showIf: 'champion', hideIf: 'mewDone' },
       { id: 'grandpa', x: 7, y: 15, dir: 'left', sprite: { base: 'old', pal: 'brown' }, move: 'look',
-        text: '연못에도 몬스터가 산다네.\n언젠가 낚시를 해 보게나.' },
+        text: '연못에도 포켓몬이 산다네.\n언젠가 낚시를 해 보게나.' },
     ],
     signs: [{ x: 3, y: 8, text: '새싹마을\n새싹이 움트는 조용한 마을' }],
     triggers: [
@@ -223,7 +223,7 @@ export const MAPS: Record<string, MapDef> = {
       { id: 'prof', x: 7, y: 2, dir: 'down', sprite: { base: 'old', pal: 'prof' }, script: 'prof' },
       { id: 'rival', x: 2, y: 4, dir: 'right', sprite: { base: 'cap', pal: 'rival' }, script: 'rivalLab', hideIf: 'rivalLeftLab' },
       { id: 'aide', x: 8, y: 5, dir: 'left', sprite: { base: 'cap', pal: 'clerk' },
-        text: '박사님은 몬스터가 진화하는\n이유를 연구하고 계셔.' },
+        text: '박사님은 포켓몬이 진화하는\n이유를 연구하고 계셔.' },
     ],
   },
 
@@ -247,7 +247,7 @@ export const MAPS: Record<string, MapDef> = {
     warps: doorWarps('sproutHouse'),
     npcs: [
       { id: 'boy', x: 2, y: 2, dir: 'down', sprite: { base: 'cap', pal: 'yellow' }, move: 'wander',
-        text: '풀숲에 들어가면 야생 몬스터가\n튀어나와!\n약하게 만든 다음 볼을 던져!' },
+        text: '풀숲에 들어가면 야생 포켓몬이\n튀어나와!\n약하게 만든 다음 볼을 던져!' },
     ],
   },
 
@@ -296,7 +296,7 @@ export const MAPS: Record<string, MapDef> = {
           intro: '눈이 마주쳤으면\n승부하는 거야!', lose: '으앙! 졌다!', after: '꼬렛은 작지만\n앞니가 엄청 세다고!' } },
       { id: 'bugboy', x: 10, y: 18, dir: 'right', sprite: { base: 'cap', pal: 'green' }, sight: 3,
         trainer: { id: 'r1bug', className: '벌레잡이', name: '민수', team: [['caterpie', 3], ['weedle', 4]], prize: 48,
-          intro: '내 벌레 몬스터를\n얕보지 마!', lose: '내 벌레들이...', after: '캐터피는 금방 진화해.\n키우는 재미가 있지!' } },
+          intro: '내 벌레 포켓몬을\n얕보지 마!', lose: '내 벌레들이...', after: '캐터피는 금방 진화해.\n키우는 재미가 있지!' } },
       { id: 'r1potion', x: 17, y: 10, sprite: 'item', item: 'potion', hideIf: 'item_r1potion' },
       { id: 'r1capsule', x: 2, y: 21, sprite: 'item', item: 'capsule', hideIf: 'item_r1capsule' },
       { id: 'hiker', x: 15, y: 21, dir: 'left', sprite: { base: 'bald', pal: 'brown' }, move: 'look',
@@ -346,7 +346,7 @@ export const MAPS: Record<string, MapDef> = {
       { id: 'worker2', x: 12, y: 1, dir: 'down', sprite: { base: 'cap', pal: 'brown' }, hideIf: 'badge_feather',
         text: '체육관 배지를 딸 즈음이면\n공사가 끝날 거야!' },
       { id: 'dewLady', x: 14, y: 13, sprite: { base: 'bun', pal: 'purple' }, move: 'wander',
-        text: '이슬시티 체육관 관장 나래는\n비행 타입 몬스터를 쓴대.' },
+        text: '이슬시티 체육관 관장 나래는\n비행 타입 포켓몬을 쓴대.' },
       { id: 'dewKid', x: 8, y: 7, sprite: { base: 'cap', pal: 'green' }, move: 'wander',
         text: '빨간 지붕은 회복센터,\n파란 지붕은 아롱마트야!' },
       { id: 'dewFisher', x: 15, y: 17, dir: 'right', sprite: { base: 'hat', pal: 'brown' }, script: 'oldRodFisher' },
@@ -366,7 +366,7 @@ export const MAPS: Record<string, MapDef> = {
     npcs: [
       { id: 'nurse', x: 3, y: 1, dir: 'down', sprite: { base: 'long', pal: 'nurse' }, script: 'nurse' },
       { id: 'centerMan', x: 7, y: 4, dir: 'left', sprite: { base: 'hat', pal: 'green' }, move: 'look',
-        text: '오른쪽 PC로 몬스터를\n맡기거나 꺼낼 수 있다네.' },
+        text: '오른쪽 PC로 포켓몬을\n맡기거나 꺼낼 수 있다네.' },
     ],
   },
 
@@ -409,7 +409,7 @@ export const MAPS: Record<string, MapDef> = {
           intro: '나래 관장님께 가려면\n나를 먼저 넘어야 해!', lose: '날개가 꺾였다...', after: '관장님은 정말 강해!' } },
       { id: 'gymT2', x: 2, y: 8, dir: 'right', sprite: { base: 'long', pal: 'purple' }, sight: 4,
         trainer: { id: 'gymT2', className: '새조련사', name: '바람', team: [['spearow', 6]], prize: 144,
-          intro: '하늘을 나는 몬스터의\n멋짐을 보여 줄게!', lose: '앗, 떨어졌다!', after: '비행 타입은 전기와 바위,\n얼음 타입에 약해.' } },
+          intro: '하늘을 나는 포켓몬의\n멋짐을 보여 줄게!', lose: '앗, 떨어졌다!', after: '비행 타입은 전기와 바위,\n얼음 타입에 약해.' } },
       { id: 'guide', x: 6, y: 10, dir: 'left', sprite: { base: 'cap', pal: 'clerk' }, script: 'gymGuide' },
     ],
   },
@@ -431,7 +431,7 @@ export const MAPS: Record<string, MapDef> = {
     warps: doorWarps('dewHouse2'),
     npcs: [
       { id: 'oldman2', x: 2, y: 2, dir: 'down', sprite: { base: 'old', pal: 'brown' },
-        text: '레벨이 오르면 진화하는 몬스터가\n많지. B버튼으로 진화를 멈출 수도\n있다네.' },
+        text: '레벨이 오르면 진화하는 포켓몬이\n많지. B버튼으로 진화를 멈출 수도\n있다네.' },
     ],
   },
   route2: {
@@ -478,7 +478,7 @@ export const MAPS: Record<string, MapDef> = {
           intro: '연못에서 잡은 발챙이야!\n귀엽지?', lose: '발챙이가 지쳤어...', after: '발챙이는 물의돌을 쓰면\n주먹이 엄청 세진대!' } },
       { id: 'r2bug', x: 6, y: 16, dir: 'right', sprite: { base: 'cap', pal: 'green' }, sight: 3,
         trainer: { id: 'r2bug', className: '벌레잡이', name: '준호', team: [['caterpie', 7], ['weedle', 8]], prize: 128,
-          intro: '벌레 몬스터는 금방금방\n자라지! 승부다!', lose: '벌써 졌다...', after: '밤에 이 길을 걸어 봐.\n콘팡이 불빛에 모여들어!' } },
+          intro: '벌레 포켓몬은 금방금방\n자라지! 승부다!', lose: '벌써 졌다...', after: '밤에 이 길을 걸어 봐.\n콘팡이 불빛에 모여들어!' } },
       { id: 'r2potion', x: 17, y: 13, sprite: 'item', item: 'superpotion', hideIf: 'item_r2potion' },
       { id: 'r2capsule', x: 2, y: 21, sprite: 'item', item: 'supercapsule', hideIf: 'item_r2capsule' },
       { id: 'r2girl', x: 12, y: 21, dir: 'left', sprite: { base: 'long', pal: 'purple' }, move: 'look',
@@ -525,7 +525,7 @@ export const MAPS: Record<string, MapDef> = {
     npcs: [
       { id: 'grunt1', x: 16, y: 5, dir: 'down', sprite: { base: 'cap', pal: 'shadow' }, sight: 1, hideIf: 'shadowFled',
         trainer: { id: 'grunt1', className: '로켓단', name: '조무래기', team: [['rattata', 10], ['zubat', 10]], prize: 300,
-          intro: '우린 로켓단!\n이 마을 숲의 몬스터를 몽땅\n잡아다 팔아 버릴 거다!', lose: '크윽! 꼬맹이 주제에!',
+          intro: '우린 로켓단!\n이 마을 숲의 포켓몬을 몽땅\n잡아다 팔아 버릴 거다!', lose: '크윽! 꼬맹이 주제에!',
           after: '두고 봐라...', afterScript: 'shadowCheck' } },
       { id: 'grunt2', x: 17, y: 5, dir: 'down', sprite: { base: 'cap', pal: 'shadow' }, sight: 1, hideIf: 'shadowFled',
         trainer: { id: 'grunt2', className: '로켓단', name: '조무래기', team: [['koffing', 11]], prize: 330,
@@ -681,7 +681,7 @@ export const MAPS: Record<string, MapDef> = {
       { id: 'farfetchdLost', x: 21, y: 3, dir: 'down', sprite: { mon: 'farfetchd' }, move: 'wander', hideIf: 'farfetchdFound', script: 'farfetchdLost' },
       { id: 'ilexBug', x: 10, y: 7, dir: 'down', sprite: { base: 'cap', pal: 'green' }, sight: 3,
         trainer: { id: 'ilexBug', className: '벌레잡이', name: '태오', team: [['metapod', 13], ['butterfree', 14]], prize: 224,
-          intro: '숲은 벌레 몬스터의 천국이야!\n내 버터플을 봐!', lose: '날개가 젖어 버렸어...', after: '버터플의 가루는\n잠이 오게 만들어.' } },
+          intro: '숲은 벌레 포켓몬의 천국이야!\n내 버터플을 봐!', lose: '날개가 젖어 버렸어...', after: '버터플의 가루는\n잠이 오게 만들어.' } },
       { id: 'ilexBug2', x: 4, y: 21, dir: 'right', sprite: { base: 'cap', pal: 'yellow' }, sight: 5,
         trainer: { id: 'ilexBug2', className: '벌레잡이', name: '현수', team: [['weedle', 12], ['kakuna', 12], ['beedrill', 14]], prize: 224,
           intro: '독침붕 무리를 조심하라고!', lose: '벌집을 들쑤신 기분이야...', after: '독침붕은 화나면\n무리 지어 쫓아와.' } },
@@ -841,7 +841,7 @@ export const MAPS: Record<string, MapDef> = {
       { id: 'hbGrunt1', x: 18, y: 7, dir: 'down', sprite: { base: 'long', pal: 'shadow' }, showIf: 'radioTakeover', hideIf: 'radioCleared',
         text: '오늘부터 이 도시의 방송은\n로켓단이 맡는다! 크크크.' },
       { id: 'hbGrunt2', x: 10, y: 13, dir: 'left', sprite: { base: 'cap', pal: 'shadow' }, showIf: 'radioTakeover', hideIf: 'radioCleared',
-        text: '곧 보스의 전파가 이 지방\n모든 몬스터를 움직이게 될 거다!' },
+        text: '곧 보스의 전파가 이 지방\n모든 포켓몬을 움직이게 될 거다!' },
       { id: 'hbKid', x: 8, y: 17, sprite: { base: 'cap', pal: 'green' }, move: 'wander',
         text: '아롱마트에서 진화의 돌을\n팔아! 이브이한테 쓰면\n어떻게 될까?' },
     ],
@@ -858,7 +858,7 @@ export const MAPS: Record<string, MapDef> = {
     npcs: [
       { id: 'nurse', x: 3, y: 1, dir: 'down', sprite: { base: 'long', pal: 'nurse' }, script: 'nurse' },
       { id: 'hbcWoman', x: 7, y: 4, dir: 'left', sprite: { base: 'bun', pal: 'purple' }, move: 'look',
-        text: '동굴에서는 풀숲이 아니어도\n몬스터가 튀어나와.\n회복약을 넉넉히 챙겨!' },
+        text: '동굴에서는 풀숲이 아니어도\n포켓몬이 튀어나와.\n회복약을 넉넉히 챙겨!' },
     ],
   },
 
@@ -872,7 +872,7 @@ export const MAPS: Record<string, MapDef> = {
       { id: 'clerk', x: 0, y: 4, dir: 'right', sprite: { base: 'cap', pal: 'clerk' }, script: 'mart' },
       { id: 'clerk2', x: 0, y: 5, dir: 'right', sprite: { base: 'bun', pal: 'clerk' }, script: 'heldMart' },
       { id: 'hbmShopper', x: 5, y: 3, sprite: { base: 'bald', pal: 'green' }, move: 'wander',
-        text: '진화의 돌은 아무 몬스터에게나\n듣는 게 아니라네.\n맞는 몬스터에게만 쓰게나.' },
+        text: '진화의 돌은 아무 포켓몬에게나\n듣는 게 아니라네.\n맞는 포켓몬에게만 쓰게나.' },
     ],
   },
 
@@ -944,7 +944,7 @@ export const MAPS: Record<string, MapDef> = {
     npcs: [
       { id: 'daycareLady', x: 2, y: 2, dir: 'down', sprite: { base: 'old', pal: 'mom' }, script: 'daycareLady' },
       { id: 'hbH2', x: 5, y: 3, dir: 'left', sprite: { base: 'bun', pal: 'mom' }, move: 'wander',
-        text: '3번도로 옆 바위굴에는 밤에만\n나타나는 분홍색 몬스터가\n있대. 삐삐라던가?' },
+        text: '3번도로 옆 바위굴에는 밤에만\n나타나는 분홍색 포켓몬이\n있대. 삐삐라던가?' },
     ],
   },
 
@@ -1354,7 +1354,7 @@ export const MAPS: Record<string, MapDef> = {
     npcs: [
       { id: 'nurse', x: 3, y: 1, dir: 'down', sprite: { base: 'long', pal: 'nurse' }, script: 'nurse' },
       { id: 'hcMan', x: 7, y: 4, dir: 'left', sprite: { base: 'bald', pal: 'clerk' }, move: 'look',
-        text: '파도타기 중에도 야생 몬스터가\n튀어나온다네. 왕눈해가 아주\n많지.' },
+        text: '파도타기 중에도 야생 포켓몬이\n튀어나온다네. 왕눈해가 아주\n많지.' },
     ],
   },
 
@@ -1432,7 +1432,7 @@ export const MAPS: Record<string, MapDef> = {
           intro: '바다 한가운데서 승부다!', lose: '물 먹었다...', after: '섬까지는 서쪽으로\n조금만 더 가면 돼.' } },
       { id: 'r6swim2', x: 12, y: 15, dir: 'right', sprite: { base: 'long', pal: 'clerk' }, swim: true, sight: 4,
         trainer: { id: 'r6swim2', className: '수영선수', name: '하늬', team: [['horsea', 25], ['seel', 25]], prize: 200,
-          intro: '내 수영 실력, 아니\n몬스터 실력을 봐!', lose: '쥐가 났어...', after: '등대 불이 꺼져서 밤에는\n수영하기 무서워.' } },
+          intro: '내 수영 실력, 아니\n포켓몬 실력을 봐!', lose: '쥐가 났어...', after: '등대 불이 꺼져서 밤에는\n수영하기 무서워.' } },
       { id: 'r6fisher', x: 20, y: 11, dir: 'left', sprite: { base: 'bald', pal: 'brown' },
         trainer: { id: 'r6fisher', className: '낚시꾼', name: '강태', team: [['magikarp', 20], ['magikarp', 22], ['goldeen', 25]], prize: 500,
           intro: '이 섬은 내 낚시터야!\n월척을 보여 주지!', lose: '잉어킹이 또...!', after: '낚싯대가 있으면 아무 물가에서나\n낚시를 할 수 있다네.' } },
@@ -1583,7 +1583,7 @@ export const MAPS: Record<string, MapDef> = {
       { id: 'r7ExpShare', x: 26, y: 1, sprite: 'item', item: 'expshare', hideIf: 'item_r7ExpShare' },
       { id: 'r7hiker', x: 10, y: 4, dir: 'down', sprite: { base: 'bald', pal: 'brown' }, sight: 1,
         trainer: { id: 'r7hiker', className: '등산가', name: '태산', team: [['machoke', 27], ['graveler', 27]], prize: 1080,
-          intro: '산을 넘어 온 내 몬스터의\n힘을 보여 주마!', lose: '허허, 산보다 높구먼!', after: '서리마을 너머 호수에서\n요즘 이상한 소리가 난다네.' } },
+          intro: '산을 넘어 온 내 포켓몬의\n힘을 보여 주마!', lose: '허허, 산보다 높구먼!', after: '서리마을 너머 호수에서\n요즘 이상한 소리가 난다네.' } },
       { id: 'r7fighter', x: 20, y: 7, dir: 'up', sprite: { base: 'bald', pal: 'yellow' }, sight: 2,
         trainer: { id: 'r7fighter', className: '격투가', name: '강철', team: [['primeape', 28]], prize: 700,
           intro: '하앗! 이 길은 내 수련장이다!', lose: '크윽! 아직 멀었구나!', after: '성원숭은 화가 나면 끝까지\n쫓아온다.' } },
@@ -2251,7 +2251,7 @@ export const MAPS: Record<string, MapDef> = {
   // ── 리그 고원 ──
   plateau: {
     id: 'plateau',
-    name: '몬스터리그',
+    name: '포켓몬리그',
     outdoor: true,
     border: 'T',
     tiles: [
@@ -2277,7 +2277,7 @@ export const MAPS: Record<string, MapDef> = {
     ],
     npcs: [
       { id: 'plateauGuide', x: 13, y: 4, dir: 'left', sprite: { base: 'cap', pal: 'clerk' }, move: 'look',
-        text: '몬스터리그에 오신 것을\n환영합니다! 한번 들어가면\n챔피언을 만날 때까지 나올 수\n없으니 준비를 단단히 하세요.' },
+        text: '포켓몬리그에 오신 것을\n환영합니다! 한번 들어가면\n챔피언을 만날 때까지 나올 수\n없으니 준비를 단단히 하세요.' },
     ],
     signs: [],
     healSpot: { x: 6, y: 8 },

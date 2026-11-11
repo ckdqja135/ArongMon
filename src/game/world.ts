@@ -60,12 +60,12 @@ export interface WorldHooks {
   grassStep(): void;
   openMenu(): void;
   pc(): void;
-  /** 뒤따라 걷는 몬스터 (파티 선두). 없으면 null */
+  /** 뒤따라 걷는 포켓몬 (파티 선두). 없으면 null */
   followerSpecies(): string | null;
   talkFollower(): void;
   /** 자전거를 타고 있는지 */
   riding(): boolean;
-  /** 자전거 뒷자리에 태울 몬스터 (파티의 아롱이). 없으면 null */
+  /** 자전거 뒷자리에 태울 포켓몬 (파티의 아롱이). 없으면 null */
   bikeBuddy(): string | null;
   /** 물을 마주 보고 A를 눌렀을 때 (파도타기) */
   water(dir: Dir): void;
@@ -74,7 +74,7 @@ export interface WorldHooks {
   stepped(): void;
 }
 
-/** 플레이어 뒤를 따라 걷는 몬스터 */
+/** 플레이어 뒤를 따라 걷는 포켓몬 */
 export interface Follower extends Actor {
   hidden: boolean;
   /** 머리 위 하트가 남은 시간 */
@@ -152,7 +152,7 @@ export class World {
     this.follower = { ...makeActor(ok ? bx : p.x, ok ? by : p.y, p.dir), hidden: !ok, heart: 0 };
   }
 
-  /** 플레이어가 한 걸음 떼면, 따라오는 몬스터는 플레이어가 있던 칸으로 */
+  /** 플레이어가 한 걸음 떼면, 따라오는 포켓몬은 플레이어가 있던 칸으로 */
   private trail(px: number, py: number) {
     const f = this.follower;
     if (!f) return;
@@ -230,7 +230,7 @@ export class World {
     return this.npcs.find((n) => !n.hidden && ((n.x === x && n.y === y) || (n.moving && n.fromX === x && n.fromY === y)));
   }
 
-  /** 플레이어가 지나갈 수 없는 사람: 마을·건물 안의 모든 사람, 이야기 때문에 길을 막는 사람(조건이 되면 사라진다), 몬스터, 떨어진 도구, 아직 이기지 않은 트레이너.
+  /** 플레이어가 지나갈 수 없는 사람: 마을·건물 안의 모든 사람, 이야기 때문에 길을 막는 사람(조건이 되면 사라진다), 포켓몬, 떨어진 도구, 아직 이기지 않은 트레이너.
    *  도로·숲·동굴에 서 있는 그 밖의 사람과 이긴 트레이너는 지나갈 수 있다 */
   private solidNpc(n: NpcRt) {
     const d = n.def;
@@ -521,7 +521,7 @@ export class World {
       this.startMove(p, dir, 2, true);
       return;
     }
-    // 따라오는 몬스터는 막지 않는다: 그 칸으로 걸어가면 서로 자리를 바꾼다
+    // 따라오는 포켓몬은 막지 않는다: 그 칸으로 걸어가면 서로 자리를 바꾼다
     if (this.blocked(tx, ty, p)) {
       if (this.time - this.lastBump > 0.3) sfx('bump');
       this.lastBump = this.time;

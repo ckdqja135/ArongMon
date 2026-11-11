@@ -24,7 +24,7 @@ export async function pickMoves(m: Mon, count: number, io: LearnIO) {
   }
 }
 
-/** 2세대 방식 기술 배우기. 기술 개수 제한이 없는 몬스터는 바로 배운다. */
+/** 2세대 방식 기술 배우기. 기술 개수 제한이 없는 포켓몬은 바로 배운다. */
 export async function learnMoves(m: Mon, ids: MoveId[], io: LearnIO) {
   for (const id of ids) {
     if (knows(m, id)) continue;

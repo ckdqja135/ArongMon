@@ -1,4 +1,4 @@
-// 1세대 몬스터 그림 No.026-050
+// 1세대 포켓몬 그림 No.026-050
 import { E, L, P, R, belly, eye, fluff, mouth, soft, spot, F, type MonArt } from '../monArtKit';
 
 type O = Parameters<typeof P>[2];

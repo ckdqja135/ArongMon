@@ -1,4 +1,4 @@
-// 낚시: 낚싯대마다 낚이는 몬스터와 레벨이 다르고, 물의 종류(민물·바다·특별한 곳)에 따라서도 다르다.
+// 낚시: 낚싯대마다 낚이는 포켓몬과 레벨이 다르고, 물의 종류(민물·바다·특별한 곳)에 따라서도 다르다.
 import type { Encounter } from './maps';
 
 export type RodId = 'oldrod' | 'goodrod' | 'superrod';

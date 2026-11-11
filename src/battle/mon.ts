@@ -1,4 +1,4 @@
-// 몬스터 개체: 2세대 방식 DV(0~15)와 노력치(스탯 경험치)를 쓴다.
+// 포켓몬 개체: 2세대 방식 DV(0~15)와 노력치(스탯 경험치)를 쓴다.
 import type { ItemId } from '../data/items';
 import { MOVES, moveRank, type MajorStatus, type MoveId } from '../data/moves';
 import { SPECIES, type Growth, type SpeciesData } from '../data/species';

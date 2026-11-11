@@ -1,4 +1,4 @@
-// 1세대 몬스터 그림 No.001-025
+// 1세대 포켓몬 그림 No.001-025
 import { E, L, P, R, art, belly, eye, fluff, mouth, soft, spot, F, type MonArt } from '../monArtKit';
 
 /** 앞모습 전용 무늬 (경계선·음영 없음) */

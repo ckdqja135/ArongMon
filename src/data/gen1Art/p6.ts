@@ -1,4 +1,4 @@
-// 1세대 몬스터 그림 No.126-151
+// 1세대 포켓몬 그림 No.126-151
 import { E, L, P, R, art, belly, eye, fluff, mouth, soft, spot, F, type MonArt } from '../monArtKit';
 
 const FS = { ...F, ...spot };

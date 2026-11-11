@@ -14,7 +14,7 @@ export type PartyMode = 'field' | 'battle' | 'battleForced' | 'item' | 'select';
 
 interface PartyOpts {
   mode: PartyMode;
-  /** 배틀에 나와 있는 몬스터 */
+  /** 배틀에 나와 있는 포켓몬 */
   active?: Mon | null;
   title?: string;
   /** HP 숫자 대신 보여 줄 글 (기술머신: 배울 수 있다 / 없다) */
@@ -82,7 +82,7 @@ function PartyScreen({ mode, active, title, note, onDone }: PartyOpts & { onDone
   };
 
   const hint =
-    swapFrom !== null ? '어디로 옮길까?' : title ?? (mode === 'item' ? '누구에게 쓸까?' : mode === 'battleForced' ? '다음 몬스터를 골라 주세요.' : '몬스터를 골라 주세요.');
+    swapFrom !== null ? '어디로 옮길까?' : title ?? (mode === 'item' ? '누구에게 쓸까?' : mode === 'battleForced' ? '다음 포켓몬을 골라 주세요.' : '포켓몬을 골라 주세요.');
   return (
     <div className="panel party">
       <div className="party-grid">

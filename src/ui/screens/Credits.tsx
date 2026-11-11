@@ -119,7 +119,7 @@ function scenes(): Scene[] {
               {me}의 모험 {h}시간 {m}분
             </div>
             <div>
-              만난 몬스터 {s.seen.length} · 함께한 몬스터 {s.caught.length}
+              만난 포켓몬 {s.seen.length} · 함께한 포켓몬 {s.caught.length}
             </div>
           </div>
         </>
@@ -149,7 +149,7 @@ function scenes(): Scene[] {
           <div className="role">언제나 집에서 기다려 준</div>
           <div>엄마 · 느티 박사</div>
           <div className="gap" />
-          <div className="role">등장 몬스터</div>
+          <div className="role">등장 포켓몬</div>
           <div>1세대 151마리</div>
           <div className="gap" />
           <div className="role">만든 사람</div>

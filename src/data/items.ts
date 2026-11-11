@@ -12,11 +12,11 @@ export interface ItemData {
   /** 회복량. 'full'이면 전부 */
   heal?: number | 'full';
   cure?: MajorStatus[] | 'all';
-  /** 기절한 몬스터를 최대 HP의 이 비율로 되살린다 */
+  /** 기절한 포켓몬을 최대 HP의 이 비율로 되살린다 */
   revive?: number;
   /** 포획 배율 */
   ball?: number;
-  /** 진화의 돌: 맞는 몬스터에게 쓰면 진화한다 */
+  /** 진화의 돌: 맞는 포켓몬에게 쓰면 진화한다 */
   stone?: boolean;
   /** 기술머신: 이 기술을 가르친다 (몇 번이든 쓸 수 있다) */
   tm?: MoveId;
@@ -57,20 +57,20 @@ const tm = (no: string, move: MoveId, price = 0): ItemData => ({
 });
 
 export const ITEMS = {
-  capsule: { name: '몬스터볼', price: 200, pocket: 'balls', ball: 1, desc: '야생 몬스터에게 던져서\n잡는 볼.' },
+  capsule: { name: '몬스터볼', price: 200, pocket: 'balls', ball: 1, desc: '야생 포켓몬에게 던져서\n잡는 볼.' },
   supercapsule: { name: '슈퍼볼', price: 600, pocket: 'balls', ball: 1.5, desc: '몬스터볼보다 잡기 쉬운\n성능 좋은 볼.' },
-  mastercapsule: { name: '마스터볼', price: 0, pocket: 'balls', ball: 255, desc: '어떤 야생 몬스터든\n반드시 잡을 수 있다.' },
+  mastercapsule: { name: '마스터볼', price: 0, pocket: 'balls', ball: 255, desc: '어떤 야생 포켓몬이든\n반드시 잡을 수 있다.' },
   hypercapsule: { name: '하이퍼볼', price: 1200, pocket: 'balls', ball: 2, desc: '슈퍼볼보다 더 잘 잡히는\n고성능 볼.' },
-  potion: { name: '회복약', price: 300, pocket: 'items', heal: 20, desc: '몬스터의 HP를 20\n회복한다.' },
-  superpotion: { name: '좋은회복약', price: 700, pocket: 'items', heal: 50, desc: '몬스터의 HP를 50\n회복한다.' },
-  hyperpotion: { name: '고급회복약', price: 1200, pocket: 'items', heal: 200, desc: '몬스터의 HP를 200\n회복한다.' },
+  potion: { name: '회복약', price: 300, pocket: 'items', heal: 20, desc: '포켓몬의 HP를 20\n회복한다.' },
+  superpotion: { name: '좋은회복약', price: 700, pocket: 'items', heal: 50, desc: '포켓몬의 HP를 50\n회복한다.' },
+  hyperpotion: { name: '고급회복약', price: 1200, pocket: 'items', heal: 200, desc: '포켓몬의 HP를 200\n회복한다.' },
   antidote: { name: '해독약', price: 100, pocket: 'items', cure: ['psn'], desc: '독 상태를 치료한다.' },
   parlyzheal: { name: '마비약', price: 200, pocket: 'items', cure: ['par'], desc: '마비 상태를 치료한다.' },
-  awakening: { name: '각성약', price: 250, pocket: 'items', cure: ['slp'], desc: '잠든 몬스터를 깨운다.' },
+  awakening: { name: '각성약', price: 250, pocket: 'items', cure: ['slp'], desc: '잠든 포켓몬을 깨운다.' },
   burnheal: { name: '화상약', price: 250, pocket: 'items', cure: ['brn'], desc: '화상을 치료한다.' },
   iceheal: { name: '해동약', price: 250, pocket: 'items', cure: ['frz'], desc: '얼음 상태를 치료한다.' },
   fullheal: { name: '만능약', price: 600, pocket: 'items', cure: 'all', desc: '모든 상태 이상을\n치료한다.' },
-  revive: { name: '부활초', price: 1500, pocket: 'items', revive: 0.5, desc: '기절한 몬스터를 HP 절반\n상태로 되살린다.' },
+  revive: { name: '부활초', price: 1500, pocket: 'items', revive: 0.5, desc: '기절한 포켓몬을 HP 절반\n상태로 되살린다.' },
   // 지니게 하는 도구
   berry: held('열매', 100, { kind: 'berry', heal: 10 }, '지니게 하면 HP가 절반 이하일 때\n먹고 10 회복한다.'),
   goldberry: held('황금열매', 400, { kind: 'berry', heal: 30 }, '지니게 하면 HP가 절반 이하일 때\n먹고 30 회복한다.'),
@@ -97,18 +97,18 @@ export const ITEMS = {
   dragonfang: boost('용의이빨', 'dragon'),
   blackglasses: boost('검은안경', 'dark'),
   metalcoat: boost('금속코트', 'steel'),
-  firestone: { name: '불꽃의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 몬스터를 진화시키는\n불꽃 무늬의 신비한 돌.' },
-  waterstone: { name: '물의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 몬스터를 진화시키는\n물빛의 신비한 돌.' },
-  thunderstone: { name: '천둥의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 몬스터를 진화시키는\n번개 무늬의 신비한 돌.' },
-  leafstone: { name: '리프의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 몬스터를 진화시키는\n잎 무늬의 신비한 돌.' },
-  moonstone: { name: '달의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 몬스터를 진화시키는\n밤하늘처럼 검은 신비한 돌.' },
-  dexdevice: { name: '몬스터도감', price: 0, pocket: 'key', desc: '만난 몬스터를 기록하는\n하이테크 도감.' },
-  wakebell: { name: '깨움방울', price: 0, pocket: 'key', desc: '맑은 소리로 잠든 몬스터를\n깨운다.' },
-  surf: { name: '파도타기', price: 0, pocket: 'key', desc: '몬스터와 함께 물 위를 건넌다.\n물가에서 A 버튼으로 쓴다.' },
-  secretpotion: { name: '비상약', price: 0, pocket: 'key', desc: '섬도시 약국의 귀한 약.\n아픈 몬스터가 기운을 차린다.' },
-  oldrod: { name: '낡은낚싯대', price: 0, pocket: 'key', desc: '낡은 낚싯대. 물가에서 쓰면\n몬스터를 낚을 수 있다.' },
-  goodrod: { name: '좋은낚싯대', price: 0, pocket: 'key', desc: '쓸 만한 낚싯대. 물가에서\n쓰면 더 센 몬스터가 낚인다.' },
-  superrod: { name: '대단한낚싯대', price: 0, pocket: 'key', desc: '최고의 낚싯대. 물가에서\n쓰면 귀한 몬스터도 낚인다.' },
+  firestone: { name: '불꽃의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 포켓몬을 진화시키는\n불꽃 무늬의 신비한 돌.' },
+  waterstone: { name: '물의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 포켓몬을 진화시키는\n물빛의 신비한 돌.' },
+  thunderstone: { name: '천둥의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 포켓몬을 진화시키는\n번개 무늬의 신비한 돌.' },
+  leafstone: { name: '리프의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 포켓몬을 진화시키는\n잎 무늬의 신비한 돌.' },
+  moonstone: { name: '달의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 포켓몬을 진화시키는\n밤하늘처럼 검은 신비한 돌.' },
+  dexdevice: { name: '포켓몬도감', price: 0, pocket: 'key', desc: '만난 포켓몬을 기록하는\n하이테크 도감.' },
+  wakebell: { name: '깨움방울', price: 0, pocket: 'key', desc: '맑은 소리로 잠든 포켓몬을\n깨운다.' },
+  surf: { name: '파도타기', price: 0, pocket: 'key', desc: '포켓몬과 함께 물 위를 건넌다.\n물가에서 A 버튼으로 쓴다.' },
+  secretpotion: { name: '비상약', price: 0, pocket: 'key', desc: '섬도시 약국의 귀한 약.\n아픈 포켓몬이 기운을 차린다.' },
+  oldrod: { name: '낡은낚싯대', price: 0, pocket: 'key', desc: '낡은 낚싯대. 물가에서 쓰면\n포켓몬을 낚을 수 있다.' },
+  goodrod: { name: '좋은낚싯대', price: 0, pocket: 'key', desc: '쓸 만한 낚싯대. 물가에서\n쓰면 더 센 포켓몬이 낚인다.' },
+  superrod: { name: '대단한낚싯대', price: 0, pocket: 'key', desc: '최고의 낚싯대. 물가에서\n쓰면 귀한 포켓몬도 낚인다.' },
   // 관장이 배지와 함께 준다
   tm01: tm('01', 'wingbeat'),
   tm02: tm('02', 'bugcharge'),

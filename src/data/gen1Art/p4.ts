@@ -1,4 +1,4 @@
-// 1세대 몬스터 그림 No.076-100
+// 1세대 포켓몬 그림 No.076-100
 import { E, L, P, R, art, belly, eye, fluff, mouth, soft, spot, F, type MonArt } from '../monArtKit';
 
 type Shape = MonArt['shapes'][number];

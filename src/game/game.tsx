@@ -191,7 +191,7 @@ class Game {
     if (app.get().scene !== 'battle') playMusic(musicFor(map));
     const p = this.world.player;
     this.save.pos = { map: map.id, x: p.x, y: p.y, dir: p.dir };
-    // 바깥과 동굴처럼 야생 몬스터가 나오는 곳은 들어설 때 이름을 띄운다
+    // 바깥과 동굴처럼 야생 포켓몬이 나오는 곳은 들어설 때 이름을 띄운다
     if ((map.outdoor || map.encounters) && map.name !== this.lastOutdoor) {
       this.lastOutdoor = map.name;
       app.set({ banner: { text: map.name, key: ++this.bannerKey } });
@@ -231,7 +231,7 @@ class Game {
   /** 낚싯줄을 드리우고 기다린다. 입질이 오면 바로 배틀 */
   async fish(rod: RodId) {
     const w = this.world;
-    if (!this.save.party.some(canFight)) return say('싸울 수 있는 몬스터가 없다!');
+    if (!this.save.party.some(canFight)) return say('싸울 수 있는 포켓몬이 없다!');
     this.riding = false;
     await say(`${josa(this.player, '은/는')} ${josa(itemData(rod).name, '을/를')}\n물에 드리웠다!`);
     w.fishing = { bite: false };
@@ -452,7 +452,7 @@ class Game {
     const h = this.save.lastHeal;
     await this.world.warpTo(h.map, h.x, h.y, h.dir);
     if (MAPS[h.map].id === 'home') await say(`엄마: ${this.player}, 어서 오렴!\n푹 쉬고 나면 괜찮아질 거야.`);
-    else await say(`${josa(this.player, '은/는')} 서둘러 돌아와\n몬스터를 회복시켰다...`);
+    else await say(`${josa(this.player, '은/는')} 서둘러 돌아와\n포켓몬을 회복시켰다...`);
     if (lost) await say(`${lost}원을 잃어버렸다...`);
   }
 

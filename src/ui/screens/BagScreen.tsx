@@ -17,7 +17,7 @@ export type BagResult = { item: ItemId; target?: number } | null;
 /** give: 파티 화면에서 지니게 할 도구를 고를 때 */
 type BagMode = 'field' | 'battle' | 'give';
 
-/** noBalls: 트레이너와의 배틀 (남의 몬스터에게는 볼을 던질 수 없다) */
+/** noBalls: 트레이너와의 배틀 (남의 포켓몬에게는 볼을 던질 수 없다) */
 export const openBag = (mode: BagMode, noBalls = false) => openOverlay<BagResult>((done) => <BagScreen mode={mode} noBalls={noBalls} onDone={done} />);
 
 const POCKETS: { id: Pocket; name: string }[] = [
@@ -104,7 +104,7 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
     if (mode === 'battle') {
       if (itemData(id).hold) return setMsg('지금은 쓸 수 없다.');
       if ('ball' in it) {
-        if (noBalls) setMsg('남의 몬스터에게는\n볼을 던질 수 없다!');
+        if (noBalls) setMsg('남의 포켓몬에게는\n볼을 던질 수 없다!');
         else onDone({ item: id });
       }
       else if (it.pocket === 'items') await useOnMon(id);

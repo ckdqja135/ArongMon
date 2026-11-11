@@ -27,7 +27,7 @@ export interface BattleViewState {
   ball: ItemId | null;
   trainer: TrainerInfo | null;
   trainerVisible: boolean;
-  /** 상대가 가진 몬스터 전부 (남은 수 표시용) */
+  /** 상대가 가진 포켓몬 전부 (남은 수 표시용) */
   enemyParty: Mon[];
   sides: [SideView, SideView];
   message: { text: string; key: number } | null;

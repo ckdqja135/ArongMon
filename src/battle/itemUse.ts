@@ -8,7 +8,7 @@ export interface ItemResult {
   hpTo?: number;
 }
 
-/** 회복 계열 도구를 몬스터에게 쓴다 (필드/배틀 공용) */
+/** 회복 계열 도구를 포켓몬에게 쓴다 (필드/배틀 공용) */
 export function useItemOn(mon: Mon, id: ItemId): ItemResult {
   const it = itemData(id);
   const max = calcStats(mon).hp;

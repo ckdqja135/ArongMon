@@ -1,4 +1,4 @@
-// 1세대 몬스터 그림 No.051-075
+// 1세대 포켓몬 그림 No.051-075
 import { E, L, P, R, art, belly, eye, fluff, mouth, soft, spot, star, F, type MonArt } from '../monArtKit';
 
 const FS = { ...F, ...spot };

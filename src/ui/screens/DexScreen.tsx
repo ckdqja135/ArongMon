@@ -17,7 +17,7 @@ function DexScreen({ onDone }: { onDone: () => void }) {
   return (
     <div className="panel dex">
       <div className="dex-head">
-        몬스터도감 <span className="small">발견 {seen.size} · 잡음 {caught.size}</span>
+        포켓몬도감 <span className="small">발견 {seen.size} · 잡음 {caught.size}</span>
       </div>
       <div className="dex-preview">{seen.has(sel.key) ? <MonImg species={sel.key} view="front" /> : <div className="unknown">?</div>}</div>
       <Frame className="dex-list">
@@ -53,7 +53,7 @@ function DexEntry({ k, caught, onDone }: { k: number; caught: boolean; onDone: (
         <div>
           <div className="no">No.{String(s.no).padStart(3, '0')}</div>
           <div className="big">{s.name}</div>
-          <div>{s.category} 몬스터</div>
+          <div>{s.category}포켓몬</div>
           <div>{s.types.map((t) => <TypeTag key={t} type={t} />)}</div>
           {caught && (
             <div className="small">

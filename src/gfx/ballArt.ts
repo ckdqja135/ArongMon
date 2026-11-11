@@ -79,7 +79,7 @@ const GROUND = [
   '....1111....',
 ];
 
-/** 배틀 HP 창의 가진 몬스터 수 (8x8) */
+/** 배틀 HP 창의 가진 포켓몬 수 (8x8) */
 const SMALL = ['..1111..', '.140231.', '14222231', '11177111', '15555561', '15555661', '.166661.', '..1111..'];
 const SMALL_MARKS: Record<BallId, [number, number, number][]> = {
   capsule: [],

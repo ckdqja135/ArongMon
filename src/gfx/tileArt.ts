@@ -193,7 +193,7 @@ export interface TileDef {
   counter?: boolean;
   pc?: boolean;
   void?: boolean;
-  /** 풀숲이 아니어도 야생 몬스터가 나온다 (동굴 바닥) */
+  /** 풀숲이 아니어도 야생 포켓몬이 나온다 (동굴 바닥) */
   wild?: boolean;
   /** 두 번째 애니메이션 프레임 (직접 만든 그림) */
   grid2?: Grid;

@@ -30,7 +30,7 @@ export interface MoveData {
   transform?: boolean;
   /** 아무 일도 일어나지 않는다 */
   splash?: boolean;
-  /** 그 몬스터만 쓰는 기술: 아롱이가 고르는 새 기술 후보에 나오지 않는다 */
+  /** 그 포켓몬만 쓰는 기술: 아롱이가 고르는 새 기술 후보에 나오지 않는다 */
   signature?: boolean;
   desc: string;
 }

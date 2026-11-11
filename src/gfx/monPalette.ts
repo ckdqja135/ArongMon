@@ -1,4 +1,4 @@
-// 종족 기본색으로 몬스터 팔레트를 만든다 (renderMonster 결과와 짝).
+// 종족 기본색으로 포켓몬 팔레트를 만든다 (renderMonster 결과와 짝).
 import { TONES } from './monsterArt';
 
 const WHITE_RAMP = ['#ffffff', '#f4f4f8', '#d6d6e2', '#aaaabc', '#74748a'];

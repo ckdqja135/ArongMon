@@ -1,6 +1,6 @@
-// 몬스터 그림 정의 (56x56 좌표계, 발바닥이 y≈53).
+// 포켓몬 그림 정의 (56x56 좌표계, 발바닥이 y≈53).
 // 색: 0 흰색, 1 종족 밝은색, 2 종족 어두운색, 3 검정
-// 1세대 몬스터 그림은 gen1Art/ 아래에 도감 번호 순으로 나뉘어 있다.
+// 1세대 포켓몬 그림은 gen1Art/ 아래에 도감 번호 순으로 나뉘어 있다.
 import { buildMonPalette } from '../gfx/monPalette';
 import * as p1 from './gen1Art/p1';
 import * as p2 from './gen1Art/p2';
@@ -12,7 +12,7 @@ import { E, F, L, P, R, art, eye, fluff, mouth, spot, star, type MonArt } from '
 
 const PARTS = [p1, p2, p3, p4, p5, p6];
 
-/** 뒷모습 없이 배틀에서도 앞모습을 그대로 쓰는 몬스터 */
+/** 뒷모습 없이 배틀에서도 앞모습을 그대로 쓰는 포켓몬 */
 export const FRONT_ONLY = new Set(['arong', 'arong2', 'arong3']);
 
 export const MON_ART: Record<string, MonArt> = {

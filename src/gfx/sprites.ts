@@ -93,7 +93,7 @@ function fromOverride(src: HTMLCanvasElement, shiny: boolean, flip = false) {
 export function monCanvas(species: string, view: MonView, shiny = false): HTMLCanvasElement | null {
   if (artPending(species)) return null;
   return cached(`m:${species}:${view}:${shiny ? 1 : 0}`, () => {
-    // 뒷모습: 앞모습만 쓰는 몬스터이거나 그림 파일을 넣은 몬스터는 앞모습 그대로
+    // 뒷모습: 앞모습만 쓰는 포켓몬이거나 그림 파일을 넣은 포켓몬은 앞모습 그대로
     const front = monOverride(species, 'front');
     const v = view === 'back' && (FRONT_ONLY.has(species) || front) ? 'front' : view;
     // 이로치 그림이 따로 있으면 그것을, 없으면 색을 돌려서
@@ -107,7 +107,7 @@ export function monCanvas(species: string, view: MonView, shiny = false): HTMLCa
   });
 }
 
-/** 필드용 몬스터 (따라다니는 몬스터, 집에 있는 아롱이). 아롱이는 방향·걸음마다 그린 16x16 그림을 쓴다 */
+/** 필드용 포켓몬 (따라다니는 포켓몬, 집에 있는 아롱이). 아롱이는 방향·걸음마다 그린 16x16 그림을 쓴다 */
 export function monFieldCanvas(species: string, dir: Dir, frame: 0 | 1 | 2 = 0): HTMLCanvasElement | null {
   if (artPending(species)) {
     void loadMonArt(species);
@@ -162,7 +162,7 @@ export function eggCanvas(view: 'icon' | 'front') {
 export const groundBallCanvas = () => cached('groundBall', () => gridCanvas(groundBallGrid(), ballPalette('capsule')));
 /** 던지는 볼 (16x16) */
 export const ballCanvas = (id: BallId) => cached(`ball:${id}`, () => gridCanvas(ballGrid(id), ballPalette(id)));
-/** HP 창의 가진 몬스터 수 (8x8). 기절했으면 회색 */
+/** HP 창의 가진 포켓몬 수 (8x8). 기절했으면 회색 */
 export const smallBallCanvas = (fainted: boolean) => cached(`ballS:${fainted}`, () => gridCanvas(smallBallGrid('capsule'), ballPalette('capsule', fainted)));
 /** 자전거 (16x11). 옆모습은 바퀴 두 개, 앞/뒷모습은 바퀴 하나 */
 /** 자전거 뒷자리의 아롱이 (헬멧) */

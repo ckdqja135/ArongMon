@@ -196,7 +196,7 @@ function PlayerHud({ side }: { side: SideView }) {
   );
 }
 
-/** 가진 몬스터 수: 싸울 수 있으면 볼, 기절했으면 회색 볼, 빈 자리는 작은 점 */
+/** 가진 포켓몬 수: 싸울 수 있으면 볼, 기절했으면 회색 볼, 빈 자리는 작은 점 */
 function PartyBalls({ party, className }: { party: Mon[]; className: string }) {
   return (
     <div className={`party-balls ${className}`}>

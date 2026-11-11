@@ -8,7 +8,7 @@ export interface SaveData {
   version: 1;
   playerName: string;
   rivalName: string;
-  /** 라이벌이 고른 첫 몬스터 */
+  /** 라이벌이 고른 첫 포켓몬 */
   rivalStarter?: string;
   playerId: number;
   money: number;
@@ -57,7 +57,7 @@ export function newSave(playerName: string): SaveData {
   };
 }
 
-// 도감을 1세대로 바꾸기 전의 종족 키 → 가장 비슷한 1세대 몬스터
+// 도감을 1세대로 바꾸기 전의 종족 키 → 가장 비슷한 1세대 포켓몬
 const OLD_SPECIES: Record<string, string> = {
   dotorong: 'bulbasaur', chamnarong: 'ivysaur', geomokrong: 'venusaur',
   bulda: 'charmander', hwada: 'charmeleon', yeomda: 'charizard',
@@ -73,7 +73,7 @@ const OLD_SPECIES: Record<string, string> = {
   bamsongsong: 'bellsprout', neogulkkoe: 'meowth', jipgae: 'pinsir', kkotnoru: 'oddish',
 };
 
-/** 예전 세이브의 몬스터를 1세대 몬스터로 바꾼다 */
+/** 예전 세이브의 포켓몬을 1세대 포켓몬으로 바꾼다 */
 function migrate(s: SaveData): SaveData {
   const sp = (k: string) => OLD_SPECIES[k] ?? k;
   for (const m of [...s.party, ...s.box]) m.species = sp(m.species);
