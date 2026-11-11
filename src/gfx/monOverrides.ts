@@ -108,7 +108,9 @@ export function loadMonArt(species: string): Promise<void> {
       const [front, icon, field, frontShiny, iconShiny] = imgs;
       if (!front) return;
       prepared.set(`${species}:icon`, fit(icon ?? front, BOX.icon));
-      prepared.set(`${species}:field`, fit(field ?? icon ?? front, fieldBox(species)));
+      // 필드 그림은 그려진 크기 그대로 (가는 그림은 칸보다 조금 크게 만들어 두었다)
+      const fieldSize = field ? Math.min(BOX.field, Math.max(field.naturalWidth, field.naturalHeight, fieldBox(species))) : fieldBox(species);
+      prepared.set(`${species}:field`, fit(field ?? icon ?? front, fieldSize));
       if (frontShiny) prepared.set(`${species}:front:shiny`, fit(frontShiny, BOX.front));
       if (iconShiny) prepared.set(`${species}:icon:shiny`, fit(iconShiny, BOX.icon));
       // 앞모습을 마지막에 넣는다 (artPending이 false가 되면 다른 그림도 준비된 것)

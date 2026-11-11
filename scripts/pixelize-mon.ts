@@ -67,10 +67,10 @@ function sharpen(img: Img, amount: number): Img {
   return { w, h, data: out };
 }
 
-/** 미디언 컷으로 색을 n개로 줄인다 */
-function quantize(img: Img, n: number) {
+/** 미디언 컷으로 색을 n개로 줄인다. cut보다 덜 칠해진 칸은 지운다 */
+function quantize(img: Img, n: number, cut = 128) {
   const px: number[][] = [];
-  for (let i = 0; i < img.w * img.h; i++) if (img.data[i * 4 + 3] >= 128) px.push([img.data[i * 4], img.data[i * 4 + 1], img.data[i * 4 + 2]]);
+  for (let i = 0; i < img.w * img.h; i++) if (img.data[i * 4 + 3] >= cut) px.push([img.data[i * 4], img.data[i * 4 + 1], img.data[i * 4 + 2]]);
   let boxes = [px];
   while (boxes.length < n) {
     // 색 범위가 가장 넓은 상자를 가장 넓은 채널의 가운데에서 자른다
@@ -91,7 +91,7 @@ function quantize(img: Img, n: number) {
   const pal = boxes.map((bx) => [0, 1, 2].map((c) => bx.reduce((s, p) => s + p[c], 0) / bx.length));
   for (let i = 0; i < img.w * img.h; i++) {
     const o = i * 4;
-    if (img.data[o + 3] < 128) { img.data[o + 3] = 0; continue; }
+    if (img.data[o + 3] < cut) { img.data[o + 3] = 0; continue; }
     let bi = 0, bd = Infinity;
     pal.forEach((p, k) => {
       const d = (p[0] - img.data[o]) ** 2 + (p[1] - img.data[o + 1]) ** 2 + (p[2] - img.data[o + 2]) ** 2;
@@ -168,13 +168,14 @@ function outline(img: Img) {
 /** size는 가로·세로 평균의 목표 길이 (팔을 벌린 꼬마돌처럼 납작한 그림도 몸이 작아지지 않게), cap은 칸 크기 */
 const TUNE = { edge: Number(process.env.EDGE ?? 16), frac: Number(process.env.FRAC ?? 0.15), sat: Number(process.env.SAT ?? 1.15), contrast: Number(process.env.CONTRAST ?? 1.08) };
 
-function pixelize(src: Img, size: number, cap: number, colors: number): Img {
+/** cut: 줄인 칸이 이만큼 칠해져야 남긴다. 작은 그림은 낮춰서 가는 꼬리·팔다리가 끊기지 않게 */
+function pixelize(src: Img, size: number, cap: number, colors: number, cut = 128): Img {
   const s = Math.min(size / ((src.w + src.h) / 2), cap / Math.max(src.w, src.h));
   const tw = Math.max(1, Math.round(src.w * s)), th = Math.max(1, Math.round(src.h * s));
   const img = shrink(src, tw, th);
   vivid(img, TUNE.sat, TUNE.contrast);
   const sharp = sharpen(img, size >= 40 ? 0.45 : 0.25);
-  quantize(sharp, colors);
+  quantize(sharp, colors, cut);
   // 작은 그림(아이콘·필드)은 안쪽 선을 넣으면 뭉개지므로 큰 그림에만
   if (size >= 40) innerLines(sharp, edgeFraction(src, tw, th, TUNE.edge), TUNE.frac);
   outline(sharp);
@@ -187,6 +188,14 @@ const save = (img: Img, path: string) => writeFileSync(path, encodePng(img.w, im
 export const frontSize = (height: number) => Math.round(Math.min(78, Math.max(46, 40 + 16 * Math.sqrt(height))));
 /** 필드에서 따라다닐 때 크기 (monOverrides.fieldBox와 같다) */
 const fieldSize = (height: number) => Math.round(Math.min(24, Math.max(11, 10 + height * 8)));
+/** 그림이 칸을 얼마나 채우는지 (팔다리·꼬리가 가늘게 뻗은 그림일수록 작다) */
+function fill(img: Img) {
+  let n = 0;
+  for (let i = 3; i < img.data.length; i += 4) if (img.data[i] > 128) n++;
+  return n / (img.w * img.h);
+}
+/** 필드 그림 크기: 가늘게 뻗은 그림(라이츄처럼 꼬리가 긴 녀석)은 몸이 앙상해지지 않게 최대 1.25배까지 키운다 */
+const fieldTarget = (img: Img, height: number) => Math.min(24, Math.round(fieldSize(height) * Math.min(1.25, Math.max(1, Math.sqrt(0.5 / fill(img))))));
 
 const [srcDir, only] = process.argv.slice(2);
 if (!srcDir) throw new Error('원본 폴더를 주세요');
@@ -198,7 +207,9 @@ for (const sp of Object.values(SPECIES)) {
   const normal = crop(load(`${srcDir}/${sp.no}.png`));
   save(pixelize(normal, frontSize(sp.height), 78, 16), `${dir}/front.png`);
   save(pixelize(normal, 26, 30, 16), `${dir}/icon.png`);
-  save(pixelize(normal, fieldSize(sp.height), 24, 10), `${dir}/field.png`);
+  // 필드 그림은 목표 크기를 넘지 않게 (게임에서 한 번 더 줄이면 픽셀이 빠져 앙상해진다)
+  const fs = fieldTarget(normal, sp.height);
+  save(pixelize(normal, fs, fs, 10, 64), `${dir}/field.png`);
   const shinyPath = `${srcDir}/shiny/${sp.no}.png`;
   if (existsSync(shinyPath)) {
     const shiny = crop(load(shinyPath));

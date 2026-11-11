@@ -19,6 +19,60 @@ const TURN_TIME = 0.1;
 const PLAYER_SX = 120;
 const PLAYER_SY = 88;
 
+/** 맵 바깥으로 미리 그려 두는 칸 수 (화면 절반보다 넉넉히) */
+const PAD = 12;
+/** 맵 바깥에서 그대로 이어 그리는 지형: 나무·물·벼랑·동굴 벽·빈 곳 */
+const EXTEND = new Set(['T', '~', '^', '#', 'X']);
+const around = new Map<MapDef, string[]>();
+
+/**
+ * 맵 바깥에 보이는 모습 (PAD칸 테두리를 두른 격자).
+ * 이어진 맵을 두 단계까지 실제 자리에 놓고, 어느 맵에도 없는 칸은 가장 가까운 칸이 나무·물 같은 지형이면 그대로 잇고
+ * 길·풀이면 그 맵의 테두리로 채운다. 어느 맵에 서 있든 같은 자리는 같은 그림이라 경계를 넘을 때 바깥 풍경이 바뀌지 않는다
+ */
+function surroundings(map: MapDef): string[] {
+  let g = around.get(map);
+  if (g) return g;
+  const size = (m: MapDef) => ({ w: m.tiles[0].length, h: m.tiles.length });
+  const placed = [{ m: map, x: 0, y: 0, depth: 0 }];
+  for (let i = 0; i < placed.length; i++) {
+    const { m, x, y, depth } = placed[i];
+    if (depth >= 2) continue;
+    for (const [side, c] of Object.entries(m.connections ?? {})) {
+      const n = MAPS[c.map];
+      if (!n || placed.some((p) => p.m === n)) continue;
+      const a = size(m), b = size(n);
+      const [nx, ny] =
+        side === 'north' ? [x + c.offset, y - b.h] : side === 'south' ? [x + c.offset, y + a.h] : side === 'west' ? [x - b.w, y + c.offset] : [x + a.w, y + c.offset];
+      placed.push({ m: n, x: nx, y: ny, depth: depth + 1 });
+    }
+  }
+  const { w, h } = size(map);
+  g = [];
+  for (let y = -PAD; y < h + PAD; y++) {
+    let row = '';
+    for (let x = -PAD; x < w + PAD; x++) {
+      const inside = placed.find((p) => x >= p.x && y >= p.y && x < p.x + size(p.m).w && y < p.y + size(p.m).h);
+      if (inside) {
+        row += inside.m.tiles[y - inside.y][x - inside.x];
+        continue;
+      }
+      let best = placed[0], bx = 0, by = 0, bd = Infinity;
+      for (const p of placed) {
+        const s = size(p.m);
+        const cx = Math.min(Math.max(x, p.x), p.x + s.w - 1), cy = Math.min(Math.max(y, p.y), p.y + s.h - 1);
+        const d = Math.max(Math.abs(x - cx), Math.abs(y - cy));
+        if (d < bd) [best, bx, by, bd] = [p, cx, cy, d];
+      }
+      const t = best.m.tiles[by - best.y][bx - best.x];
+      row += EXTEND.has(t) ? t : (best.m.border ?? 'X');
+    }
+    g.push(row);
+  }
+  around.set(map, g);
+  return g;
+}
+
 export interface Actor {
   x: number;
   y: number;
@@ -217,9 +271,7 @@ export class World {
 
   tileChar(x: number, y: number): string {
     if (this.inBounds(x, y)) return this.map.tiles[y][x];
-    const n = this.neighbor(x, y);
-    if (n) return n.map.tiles[n.y][n.x];
-    return this.map.border ?? 'X';
+    return surroundings(this.map)[y + PAD]?.[x + PAD] ?? this.map.border ?? 'X';
   }
 
   tile(x: number, y: number): TileDef {

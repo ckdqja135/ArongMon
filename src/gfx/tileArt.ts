@@ -1,6 +1,6 @@
 // 16x16 타일 그림과 타일 정의. '.'은 투명이고, base 타일 위에 겹쳐 그린다.
 import {
-  CAVE_MOUTH, CLIFF, DOOR, FENCE, FLOWER, FRINGE, GRASS, LAMP, LEDGE, PATH, ROCK, SAND, SHORE, SIGN, TALLGRASS, WATER, WINDOW,
+  CAVE_MOUTH, CLIFF, DOOR, FENCE, FLOWER, FRINGE, GRASS, LAMP, LEDGE, PATH, REEF_FLAT, REEF_PAIR, ROCK, SAND, SHORE, SIGN, TALLGRASS, WATER, WINDOW,
   lighthouseGrid, roofGrid, treeGrid, wallGrid, type RoofPart,
 } from './fieldArt';
 import {
@@ -200,7 +200,7 @@ export interface TileDef {
   /** 얼음: 디디면 막힐 때까지 미끄러진다 */
   ice?: boolean;
   /** 이웃 칸에 따라 모양이 바뀐다 */
-  auto?: 'grass' | 'tree' | 'path' | 'water' | 'cave' | 'statue';
+  auto?: 'grass' | 'tree' | 'path' | 'water' | 'cave' | 'statue' | 'reef';
 }
 
 function stamp(g: Grid, s: Grid): Grid {
@@ -242,6 +242,8 @@ export const TILES: Record<string, TileDef> = {
   S: { grid: SIGN, pal: 'fence', base: '.', solid: true, sign: true },
   v: { grid: LEDGE, pal: 'ledge', solid: true, ledge: 'down' },
   o: { grid: ROCK, pal: 'rock', base: '.', solid: true },
+  /** 바다 바위 (암초): 더 갈 수 없는 바다 끝에 늘어놓는다. 밑의 물결이 함께 움직이도록 두 번째 프레임을 둔다 */
+  'ø': { grid: ROCK, grid2: ROCK, pal: 'reef', base: '~', solid: true, auto: 'reef' },
   '^': { grid: CLIFF, pal: 'rock', solid: true },
   U: { grid: CAVE_MOUTH, pal: 'rock', door: true },
   Q: { art: 'statue', pal: 'statue', base: '.', solid: true, sign: true },
@@ -308,6 +310,12 @@ export function tileVariant(ch: string, at: (dx: number, dy: number) => string, 
   switch (auto) {
     case 'grass':
       return hash(x, y) % 3 === 0 ? 1 : 0;
+    case 'reef': {
+      // 셋씩 되풀이되지 않게 잘 섞은 값으로 고른다
+      let h = Math.imul(x, 374761393) + Math.imul(y, 668265263);
+      h = Math.imul(h ^ (h >>> 13), 1274126177);
+      return ((h ^ (h >>> 16)) >>> 0) % 3;
+    }
     case 'tree': {
       const t = (c: string) => c === 'T';
       return (t(at(0, -1)) ? 1 : 0) | (t(at(0, 1)) ? 2 : 0) | (t(at(-1, 0)) ? 4 : 0) | (t(at(1, 0)) ? 8 : 0);
@@ -315,7 +323,8 @@ export function tileVariant(ch: string, at: (dx: number, dy: number) => string, 
     case 'path':
       return sides((c) => GRASSY.has(c));
     case 'water':
-      return sides((c) => !TILES[c]?.water && c !== 'X');
+      // 물 위에 놓인 것(암초)은 물로 친다
+      return sides((c) => !TILES[c]?.water && TILES[c]?.base !== '~' && c !== 'X');
     case 'statue': {
       // 석상·바위 밑은 둘레의 바닥을 따른다 (얼음을 먼저 본다)
       const around = [at(0, 1), at(-1, 0), at(1, 0), at(0, -1)];
@@ -338,13 +347,15 @@ export function tileLayers(ch: string, frame = 0, variant = 0): TileLayer[] {
   const d = TILES[ch] ?? TILES.X;
   if (d.void) return [];
   const base = d.auto === 'statue' && variant ? STATUE_FLOORS[variant - 1] : d.base;
-  const out: TileLayer[] = base ? tileLayers(base) : [];
+  const out: TileLayer[] = base ? tileLayers(base, frame) : [];
   let g = d.grid ?? ART[d.art!];
   if (frame && d.art2) g = d.art2 === 'shift' ? shift(g, 4) : ART[d.art2];
   if (frame && d.grid2) g = d.grid2;
   if (d.auto === 'grass' && variant) g = GRASS[1];
   if (d.auto === 'tree') g = treeGrid(variant);
   if (d.auto === 'cave') g = caveWallGrid(variant);
+  // 암초는 자리마다 모양을 바꿔 늘어선 담장처럼 보이지 않게
+  if (d.auto === 'reef') g = [ROCK, REEF_PAIR, REEF_FLAT][variant];
   out.push({ grid: g, pal: d.pal });
   for (let side = 0; side < 4; side++) {
     if (!(variant & (1 << side))) continue;
