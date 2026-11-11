@@ -14,7 +14,8 @@ import { Frame, Menu } from '../widgets';
 import { openParty } from './PartyScreen';
 
 export type BagResult = { item: ItemId; target?: number } | null;
-type BagMode = 'field' | 'battle';
+/** give: 파티 화면에서 지니게 할 도구를 고를 때 */
+type BagMode = 'field' | 'battle' | 'give';
 
 /** noBalls: 트레이너와의 배틀 (남의 몬스터에게는 볼을 던질 수 없다) */
 export const openBag = (mode: BagMode, noBalls = false) => openOverlay<BagResult>((done) => <BagScreen mode={mode} noBalls={noBalls} onDone={done} />);
@@ -84,10 +85,22 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
     force((x) => x + 1);
   };
 
+  /** 도구를 지니게 한다: 파티 화면에서 왔으면 고른 도구를 돌려주고, 아니면 누구에게 줄지 고른다 */
+  const hold = async (id: ItemId) => {
+    setSub(null);
+    if (!itemData(id).hold) return setMsg('그 도구는\n지니게 할 수 없다.');
+    if (mode === 'give') return onDone({ item: id });
+    const target = await openParty({ mode: 'item', title: `${josa(ITEMS[id].name, '을/를')}\n누구에게 지니게 할까?` });
+    if (target === null) return;
+    setMsg(G.giveHeld(G.save.party[target], id));
+    force((x) => x + 1);
+  };
+
   const choose = async (id: ItemId) => {
     const it = ITEMS[id];
     setSub(null);
     if (mode === 'battle') {
+      if (itemData(id).hold) return setMsg('지금은 쓸 수 없다.');
       if ('ball' in it) {
         if (noBalls) setMsg('남의 몬스터에게는\n볼을 던질 수 없다!');
         else onDone({ item: id });
@@ -111,12 +124,19 @@ function BagScreen({ mode, noBalls, onDone }: { mode: BagMode; noBalls: boolean;
     else setMsg(`${josa(G.player, '은/는')} ${josa(it.name, '을/를')}\n펼쳐 보았다.`);
   };
 
-  // 중요한 물건과 기술머신은 버릴 수 없다
-  const options = mode === 'battle' || ITEMS[sel]?.pocket === 'key' || ITEMS[sel]?.pocket === 'tm' ? ['사용', '취소'] : ['사용', '버리기', '취소'];
+  // 중요한 물건과 기술머신은 버릴 수 없다. 지니게 하는 도구는 '사용' 대신 '지니게 하기'
+  const holdable = sel ? !!itemData(sel).hold : false;
+  const options =
+    mode === 'give'
+      ? ['지니게 하기', '취소']
+      : mode === 'battle' || ITEMS[sel]?.pocket === 'key' || ITEMS[sel]?.pocket === 'tm'
+        ? ['사용', '취소']
+        : [holdable ? '지니게 하기' : '사용', '버리기', '취소'];
   const onSub = async (k: number) => {
     const id = sub!;
     const o = options[k];
     if (o === '사용') await choose(id);
+    else if (o === '지니게 하기') await hold(id);
     else if (o === '버리기') {
       G.removeItem(id);
       setSub(null);

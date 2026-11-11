@@ -675,6 +675,7 @@ export const MAPS: Record<string, MapDef> = {
     connections: { south: { map: 'danpung', offset: 0 }, north: { map: 'route3', offset: -5 } },
     warps: [],
     npcs: [
+      { id: 'ilexLuckyEgg', x: 2, y: 11, sprite: 'item', item: 'luckyegg', hideIf: 'item_ilexLuckyEgg' },
       { id: 'charcoalKid', x: 13, y: 28, dir: 'left', sprite: { base: 'cap', pal: 'brown' }, script: 'charcoalKid' },
       { id: 'farfetchdHome', x: 10, y: 28, dir: 'right', sprite: { mon: 'farfetchd' }, showIf: 'farfetchdFound', script: 'farfetchdHome' },
       { id: 'farfetchdLost', x: 21, y: 3, dir: 'down', sprite: { mon: 'farfetchd' }, move: 'wander', hideIf: 'farfetchdFound', script: 'farfetchdLost' },
@@ -868,6 +869,7 @@ export const MAPS: Record<string, MapDef> = {
     warps: doorWarps('hanbitMart'),
     npcs: [
       { id: 'clerk', x: 0, y: 4, dir: 'right', sprite: { base: 'cap', pal: 'clerk' }, script: 'mart' },
+      { id: 'clerk2', x: 0, y: 5, dir: 'right', sprite: { base: 'bun', pal: 'clerk' }, script: 'heldMart' },
       { id: 'hbmShopper', x: 5, y: 3, sprite: { base: 'bald', pal: 'green' }, move: 'wander',
         text: '진화의 돌은 아무 몬스터에게나\n듣는 게 아니라네.\n맞는 몬스터에게만 쓰게나.' },
     ],
@@ -979,6 +981,7 @@ export const MAPS: Record<string, MapDef> = {
     warps: [],
     npcs: [
       { id: 'snorlax', x: 9, y: 11, dir: 'down', sprite: { mon: 'snorlax' }, script: 'snorlax', hideIf: 'snorlaxGone' },
+      { id: 'r4Leftovers', x: 9, y: 11, sprite: 'item', item: 'leftovers', showIf: 'snorlaxGone', hideIf: 'item_r4Leftovers' },
       { id: 'r4camper', x: 6, y: 4, dir: 'right', sprite: { base: 'cap', pal: 'green' }, sight: 3,
         trainer: { id: 'r4camper', className: '캠핑보이', name: '산들', team: [['growlithe', 19], ['ponyta', 20]], prize: 400,
           intro: '캠프파이어처럼 뜨거운\n승부를 하자!', lose: '불이 꺼져 버렸어...', after: '가디는 주인 말을\n정말 잘 들어.' } },
@@ -1265,6 +1268,7 @@ export const MAPS: Record<string, MapDef> = {
     connections: { east: { map: 'route5', offset: 0 }, west: { map: 'route6', offset: 0 } },
     warps: doorWarps('harbor'),
     npcs: [
+      { id: 'harborQuickClaw', x: 13, y: 1, sprite: 'item', item: 'quickclaw', hideIf: 'item_harborQuickClaw' },
       { id: 'harborGrunt', x: 9, y: 17, dir: 'right', sprite: { base: 'cap', pal: 'shadow' }, sight: 3, hideIf: 'lighthouseHealed',
         trainer: { id: 'harborGrunt', className: '로켓단', name: '조무래기', team: [['grimer', 25], ['golbat', 25]], prize: 750,
           intro: '등대 불이 꺼져 있어야\n밤에 몰래 배를 띄우지.\n방해하지 마라!', lose: '크윽, 또 그 검은 강아지냐!',
@@ -1474,6 +1478,7 @@ export const MAPS: Record<string, MapDef> = {
     connections: { east: { map: 'route6', offset: 0 } },
     warps: doorWarps('island'),
     npcs: [
+      { id: 'islandFocusBand', x: 2, y: 18, sprite: 'item', item: 'focusband', hideIf: 'item_islandFocusBand' },
       { id: 'islandMan', x: 14, y: 11, sprite: { base: 'bald', pal: 'brown' }, move: 'wander',
         text: '이 섬 사람들은 모두 몸을\n단련한다네. 관장 무쇠는\n폭포 밑에서 수련하지!' },
       { id: 'islandGirl', x: 8, y: 19, sprite: { base: 'bun', pal: 'yellow' }, move: 'wander',
@@ -1573,6 +1578,7 @@ export const MAPS: Record<string, MapDef> = {
     connections: { west: { map: 'bora', offset: -8 }, east: { map: 'frost', offset: -1 } },
     warps: [],
     npcs: [
+      { id: 'r7ExpShare', x: 26, y: 1, sprite: 'item', item: 'expshare', hideIf: 'item_r7ExpShare' },
       { id: 'r7hiker', x: 10, y: 4, dir: 'down', sprite: { base: 'bald', pal: 'brown' }, sight: 1,
         trainer: { id: 'r7hiker', className: '등산가', name: '태산', team: [['machoke', 27], ['graveler', 27]], prize: 1080,
           intro: '산을 넘어 온 내 몬스터의\n힘을 보여 주마!', lose: '허허, 산보다 높구먼!', after: '서리마을 너머 호수에서\n요즘 이상한 소리가 난다네.' } },

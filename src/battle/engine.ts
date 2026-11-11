@@ -118,6 +118,11 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
   const statsOf = (s: Side): Stats => (s.form ? { ...s.form.stats, hp: calcStats(act(s)).hp } : calcStats(act(s)));
   const typesOf = (s: Side): readonly Type[] => SPECIES[s.form?.species ?? act(s).species].types;
   const movesOf = (s: Side) => s.form?.moves ?? act(s).moves;
+  /** 지닌 도구의 효과 */
+  const held = (s: Side) => {
+    const id = act(s).item;
+    return id ? itemData(id).hold : undefined;
+  };
   const label = (s: Side) => (s === P ? monName(act(s)) : `${wild ? '야생' : '상대'} ${monName(act(s))}`);
   const lj = (s: Side, pair: string) => josa(label(s), pair);
   const say = (t: string) => io.message(t);
@@ -197,6 +202,8 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
       const [s, mv] = order[i];
       if (changed() || act(s).hp <= 0 || act(other(s)).hp <= 0) continue;
       await useMove(s, mv, i === 0);
+      await eatBerry(P);
+      await eatBerry(E);
       ended = await handleFaints();
       if (ended) return ended;
     }
@@ -214,6 +221,12 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
         io.refresh();
         await say(`${label(s)}의 얼음이 녹았다!`);
       }
+      const max = statsOf(s).hp;
+      if (held(s)?.kind === 'leftovers' && m.hp > 0 && m.hp < max) {
+        await heal(s, Math.max(1, Math.floor(max / 16)));
+        await say(`${lj(s, '은/는')} 먹다남은음식으로\n조금 회복했다!`);
+      }
+      await eatBerry(s);
     }
     P.flinch = E.flinch = false;
     ended = await handleFaints();
@@ -345,10 +358,14 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
         dmg = calcDamage(A, D, move, crit, eff, randInt(217, 255));
       }
       dmg = Math.min(dmg, act(D).hp);
+      // 기합의띠: 쓰러질 공격을 가끔 HP 1로 버틴다
+      const endure = dmg >= act(D).hp && held(D)?.kind === 'focusband' && chance(12);
+      if (endure) dmg = act(D).hp - 1;
       await damage(D, dmg, move.type, crit || eff > 1);
       total += dmg;
       done++;
       if (crit) await say('급소에 맞았다!');
+      if (endure) await say(`${lj(D, '은/는')} 기합의띠로\n버텼다!`);
       if (act(D).hp <= 0) break;
     }
     if (hits > 1) await say(`${done}번 맞았다!`);
@@ -489,6 +506,8 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
     if (crit) dmg *= 2;
     dmg += 2;
     if (move !== CONFUSION_HIT && typesOf(A).includes(move.type)) dmg = Math.floor(dmg * 1.5);
+    const h = held(A);
+    if (h?.kind === 'boost' && h.type === move.type && move !== CONFUSION_HIT) dmg = Math.floor(dmg * 1.1);
     dmg = Math.floor(dmg * eff);
     dmg = Math.floor((dmg * roll) / 255);
     return Math.max(1, dmg);
@@ -511,6 +530,25 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
     io.refresh();
   }
 
+  /** 지닌 열매: HP가 절반 이하면 회복, 상태 이상·혼란이면 고친다. 먹으면 없어진다 */
+  async function eatBerry(S: Side) {
+    const m = act(S);
+    const h = held(S);
+    if (!h || m.hp <= 0) return;
+    const name = itemData(m.item!).name;
+    if (h.kind === 'berry' && m.hp <= statsOf(S).hp / 2) {
+      m.item = undefined;
+      await heal(S, h.heal);
+      await say(`${lj(S, '은/는')} ${josa(name, '을/를')}\n먹고 HP를 회복했다!`);
+    } else if (h.kind === 'cure' && (m.status || S.confused)) {
+      m.item = undefined;
+      m.status = null;
+      S.confused = 0;
+      io.refresh();
+      await say(`${lj(S, '은/는')} ${josa(name, '을/를')}\n먹고 상태가 나았다!`);
+    }
+  }
+
   // ── 순서/AI ──
   function speedOf(s: Side) {
     const m = act(s);
@@ -523,6 +561,10 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
     const pa = am >= 0 ? MOVES[movesOf(a)[am].id].priority ?? 0 : 0;
     const pb = bm >= 0 ? MOVES[movesOf(b)[bm].id].priority ?? 0 : 0;
     if (pa !== pb) return pa > pb;
+    // 선제공격손톱: 가끔 스피드와 상관없이 먼저
+    const qa = held(a)?.kind === 'quickclaw' && chance(23);
+    const qb = held(b)?.kind === 'quickclaw' && chance(23);
+    if (qa !== qb) return qa;
     const sa = speedOf(a), sb = speedOf(b);
     if (sa !== sb) return sa > sb;
     return chance(50);
@@ -655,8 +697,10 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
   async function awardExp(defeated: Mon) {
     const alive = [...participants].filter((i) => P.party[i]?.hp > 0);
     if (!alive.length) return;
+    // 학습장치를 지닌 포켓몬은 배틀에 안 나갔어도 절반을 받는다
+    const sharers = P.party.map((m, i) => i).filter((i) => !alive.includes(i) && P.party[i].hp > 0 && P.party[i].item && itemData(P.party[i].item!).hold?.kind === 'expshare');
     const sp = spec(defeated);
-    for (const i of alive) {
+    for (const i of [...alive, ...sharers]) {
       const m = P.party[i];
       const se = m.statExp;
       se.hp = Math.min(65535, se.hp + sp.base.hp);
@@ -666,7 +710,9 @@ export async function runBattle(o: BattleOpts, ctx: BattleCtx, io: BattleIO): Pr
       se.spc = Math.min(65535, se.spc + sp.base.spa);
       if (m.level >= 100) continue;
       let gain = Math.floor(Math.floor((sp.expYield * defeated.level) / 7) / alive.length);
+      if (!alive.includes(i)) gain = Math.floor(gain / 2);
       if (!wild) gain = Math.floor(gain * 1.5);
+      if (m.item && itemData(m.item).hold?.kind === 'luckyegg') gain = Math.floor(gain * 1.5);
       gain = Math.max(1, gain);
       await say(`${josa(monName(m), '은/는')}\n${gain} 경험치를 얻었다!`);
       await gainExp(m, gain, i === P.active);

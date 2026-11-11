@@ -5,6 +5,9 @@ import { useButtons } from '../../engine/input';
 import { G } from '../../game/game';
 import { openOverlay } from '../overlay';
 import { Frame, GenderMark, HpBar, Menu, MonIcon } from '../widgets';
+import { itemData } from '../../data/items';
+import { ask } from '../dialog';
+import { openBag } from './BagScreen';
 import { openSummary } from './SummaryScreen';
 
 export type PartyMode = 'field' | 'battle' | 'battleForced' | 'item' | 'select';
@@ -51,11 +54,22 @@ function PartyScreen({ mode, active, title, note, onDone }: PartyOpts & { onDone
     }
   }, idle);
 
-  const subItems = mode === 'field' ? ['상태 보기', '순서 바꾸기', '취소'] : ['교체', '상태 보기', '취소'];
+  const subItems = mode === 'field' ? ['상태 보기', '순서 바꾸기', '지닌 도구', '취소'] : ['교체', '상태 보기', '취소'];
   const onSub = async (k: number) => {
     const label = subItems[k];
     setSub(false);
     if (label === '상태 보기') await openSummary(party, i);
+    else if (label === '지닌 도구') {
+      // 지닌 도구 빼기·바꾸기, 없으면 가방에서 골라 지니게 한다
+      const m = party[i];
+      const k = m.item ? await ask(`${josa(monName(m), '은/는')}\n${josa(itemData(m.item).name, '을/를')} 지니고 있다.`, ['빼기', '바꾸기', '그만두기']) : 1;
+      if (k === 0) setMsg(G.takeHeld(m));
+      else if (k === 1) {
+        const r = await openBag('give');
+        if (r) setMsg(G.giveHeld(m, r.item));
+      }
+      force((x) => x + 1);
+    }
     else if (label === '순서 바꾸기') setSwapFrom(i);
     else if (label === '교체') {
       const m = party[i];
@@ -79,6 +93,7 @@ function PartyScreen({ mode, active, title, note, onDone }: PartyOpts & { onDone
                 <div className="pname">
                   {monName(m)}
                   <GenderMark mon={m} />
+                  {m.item && <span className="held-mark" title={itemData(m.item).name}>✦</span>}
                 </div>
                 <div className="plv">
                   Lv{m.level}

@@ -405,6 +405,26 @@ class Game {
     chooseMove: (mon, options) => openOverlay<MoveId>((done) => <MoveChoice mon={mon} options={options} onDone={done} />),
   };
 
+  /** 포켓몬에게 도구를 지니게 한다. 원래 지니던 도구는 가방으로 돌아간다. 안내 문구를 돌려준다 */
+  giveHeld(m: Mon, id: ItemId): string {
+    const prev = m.item;
+    this.removeItem(id);
+    if (prev) this.addItem(prev);
+    m.item = id;
+    const name = itemData(id).name;
+    return prev
+      ? `${josa(itemData(prev).name, '을/를')} 가방에 넣고\n${josa(name, '을/를')} 지니게 했다.`
+      : `${monName(m)}에게\n${josa(name, '을/를')} 지니게 했다.`;
+  }
+
+  /** 지닌 도구를 가방으로 */
+  takeHeld(m: Mon): string {
+    const id = m.item!;
+    this.addItem(id);
+    m.item = undefined;
+    return `${monName(m)}에게서\n${josa(itemData(id).name, '을/를')} 받았다.`;
+  }
+
   /** 기술머신으로 기술 하나를 가르친다 (기술이 꽉 찼으면 잊을 기술을 고른다) */
   async teachMove(m: Mon, id: MoveId) {
     await learnMoves(m, [id], this.learnIO);

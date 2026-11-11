@@ -1,5 +1,6 @@
 import { josa } from '../engine/josa';
 import { MOVES, type MajorStatus, type MoveId } from './moves';
+import { TYPE_NAME, type Type } from './types';
 
 export type Pocket = 'items' | 'balls' | 'tm' | 'key';
 
@@ -19,7 +20,32 @@ export interface ItemData {
   stone?: boolean;
   /** 기술머신: 이 기술을 가르친다 (몇 번이든 쓸 수 있다) */
   tm?: MoveId;
+  /** 포켓몬에게 지니게 했을 때의 효과 */
+  hold?: HeldEffect;
 }
+
+export type HeldEffect =
+  /** HP가 절반 이하가 되면 먹고 회복한다 (한 번) */
+  | { kind: 'berry'; heal: number }
+  /** 상태 이상·혼란을 바로 고친다 (한 번) */
+  | { kind: 'cure' }
+  /** 턴이 끝날 때마다 최대 HP의 1/16 회복 */
+  | { kind: 'leftovers' }
+  /** 쓰러질 공격을 가끔 HP 1로 버틴다 */
+  | { kind: 'focusband' }
+  /** 가끔 먼저 행동한다 */
+  | { kind: 'quickclaw' }
+  /** 경험치 1.5배 */
+  | { kind: 'luckyegg' }
+  /** 배틀에 나가지 않아도 경험치를 나눠 받는다 */
+  | { kind: 'expshare' }
+  /** 그 타입 기술의 위력이 10% 오른다 */
+  | { kind: 'boost'; type: Type };
+
+const held = (name: string, price: number, hold: HeldEffect, desc: string): ItemData => ({ name, price, pocket: 'items', hold, desc });
+/** 타입 강화 도구 */
+const boost = (name: string, type: Type): ItemData =>
+  held(name, 1000, { kind: 'boost', type }, `지니게 하면 ${TYPE_NAME[type]} 타입\n기술의 위력이 올라간다.`);
 
 /** 기술머신. price가 0이면 관장에게서만 받을 수 있다 */
 const tm = (no: string, move: MoveId, price = 0): ItemData => ({
@@ -45,6 +71,32 @@ export const ITEMS = {
   iceheal: { name: '해동약', price: 250, pocket: 'items', cure: ['frz'], desc: '얼음 상태를 치료한다.' },
   fullheal: { name: '만능약', price: 600, pocket: 'items', cure: 'all', desc: '모든 상태 이상을\n치료한다.' },
   revive: { name: '부활초', price: 1500, pocket: 'items', revive: 0.5, desc: '기절한 몬스터를 HP 절반\n상태로 되살린다.' },
+  // 지니게 하는 도구
+  berry: held('열매', 100, { kind: 'berry', heal: 10 }, '지니게 하면 HP가 절반 이하일 때\n먹고 10 회복한다.'),
+  goldberry: held('황금열매', 400, { kind: 'berry', heal: 30 }, '지니게 하면 HP가 절반 이하일 때\n먹고 30 회복한다.'),
+  miracleberry: held('만병통치열매', 400, { kind: 'cure' }, '지니게 하면 상태 이상이나\n혼란을 바로 고친다.'),
+  leftovers: held('먹다남은음식', 0, { kind: 'leftovers' }, '지니게 하면 배틀 중 턴마다\nHP를 조금씩 회복한다.'),
+  focusband: held('기합의띠', 0, { kind: 'focusband' }, '지니게 하면 쓰러질 공격을\n가끔 버텨 낸다.'),
+  quickclaw: held('선제공격손톱', 0, { kind: 'quickclaw' }, '지니게 하면 가끔\n상대보다 먼저 행동한다.'),
+  luckyegg: held('행복의알', 0, { kind: 'luckyegg' }, '지니게 하면 받는 경험치가\n1.5배가 된다.'),
+  expshare: held('학습장치', 0, { kind: 'expshare' }, '지니게 하면 배틀에 나가지\n않아도 경험치를 받는다.'),
+  silkscarf: boost('실크스카프', 'normal'),
+  charcoal: boost('목탄', 'fire'),
+  mysticwater: boost('신비의물방울', 'water'),
+  miracleseed: boost('기적의씨', 'grass'),
+  magnet: boost('자석', 'electric'),
+  nevermeltice: boost('녹지않는얼음', 'ice'),
+  blackbelt: boost('검은띠', 'fighting'),
+  poisonbarb: boost('독바늘', 'poison'),
+  softsand: boost('부드러운모래', 'ground'),
+  sharpbeak: boost('예리한부리', 'flying'),
+  twistedspoon: boost('휘어진스푼', 'psychic'),
+  silverpowder: boost('은빛가루', 'bug'),
+  hardstone: boost('딱딱한돌', 'rock'),
+  spelltag: boost('저주의부적', 'ghost'),
+  dragonfang: boost('용의이빨', 'dragon'),
+  blackglasses: boost('검은안경', 'dark'),
+  metalcoat: boost('금속코트', 'steel'),
   firestone: { name: '불꽃의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 몬스터를 진화시키는\n불꽃 무늬의 신비한 돌.' },
   waterstone: { name: '물의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 몬스터를 진화시키는\n물빛의 신비한 돌.' },
   thunderstone: { name: '천둥의돌', price: 2100, pocket: 'items', stone: true, desc: '어떤 몬스터를 진화시키는\n번개 무늬의 신비한 돌.' },

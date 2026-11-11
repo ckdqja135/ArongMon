@@ -24,20 +24,26 @@ const RIVAL = () => G.save.rivalName;
 /** 라이벌이 연구소 책상에서 고르는 몬스터 */
 const RIVAL_CHOICES = ['bulbasaur', 'charmander', 'squirtle'];
 
+/** 한빛시티 마트 두 번째 점원: 타입 강화 도구 */
+const HELD_STOCK: ItemId[] = [
+  'silkscarf', 'charcoal', 'mysticwater', 'miracleseed', 'magnet', 'nevermeltice', 'blackbelt', 'poisonbarb', 'softsand',
+  'sharpbeak', 'twistedspoon', 'silverpowder', 'hardstone', 'spelltag', 'dragonfang', 'blackglasses', 'metalcoat',
+];
+
 const MART_STOCK: Record<string, ItemId[]> = {
-  dewMart: ['capsule', 'potion', 'antidote', 'parlyzheal', 'awakening', 'burnheal'],
-  danpungMart: ['capsule', 'supercapsule', 'potion', 'superpotion', 'antidote', 'parlyzheal', 'awakening', 'burnheal', 'iceheal'],
+  dewMart: ['capsule', 'potion', 'antidote', 'parlyzheal', 'awakening', 'burnheal', 'berry'],
+  danpungMart: ['capsule', 'supercapsule', 'potion', 'superpotion', 'antidote', 'parlyzheal', 'awakening', 'burnheal', 'iceheal', 'berry'],
   boraMart: [
     'capsule', 'supercapsule', 'hypercapsule', 'potion', 'superpotion', 'hyperpotion', 'antidote', 'parlyzheal', 'awakening',
-    'burnheal', 'iceheal', 'fullheal', 'revive',
+    'burnheal', 'iceheal', 'fullheal', 'revive', 'berry', 'goldberry', 'miracleberry',
   ],
   harborMart: [
     'capsule', 'supercapsule', 'hypercapsule', 'superpotion', 'hyperpotion', 'antidote', 'parlyzheal', 'awakening',
-    'burnheal', 'iceheal', 'fullheal', 'revive',
+    'burnheal', 'iceheal', 'fullheal', 'revive', 'berry', 'goldberry', 'miracleberry',
   ],
   hanbitMart: [
     'capsule', 'supercapsule', 'potion', 'superpotion', 'hyperpotion', 'antidote', 'parlyzheal', 'awakening', 'burnheal', 'iceheal',
-    'fullheal', 'revive', 'firestone', 'waterstone', 'thunderstone', 'leafstone', 'moonstone',
+    'fullheal', 'revive', 'berry', 'goldberry', 'miracleberry', 'firestone', 'waterstone', 'thunderstone', 'leafstone', 'moonstone',
     'tm09', 'tm10', 'tm11', 'tm12', 'tm13', 'tm14', 'tm15', 'tm16', 'tm17', 'tm18', 'tm19', 'tm20',
   ],
 };
@@ -168,6 +174,10 @@ export const SCRIPTS: Record<string, Script> = {
 
   async mart() {
     await openMart(MART_STOCK[G.world.map.id] ?? MART_STOCK.dewMart);
+  },
+  async heldMart() {
+    await say('여기는 포켓몬에게 지니게 하는\n도구 코너예요!');
+    await openMart(HELD_STOCK);
   },
 
   async gymLeader() {

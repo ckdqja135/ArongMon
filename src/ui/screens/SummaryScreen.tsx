@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { STATUS_NAME, calcStats, expForLevel, isShiny, monName, spec, type Mon } from '../../battle/mon';
+import { itemData } from '../../data/items';
 import { MOVES } from '../../data/moves';
 import { useButtons } from '../../engine/input';
 import { openOverlay } from '../overlay';
@@ -56,6 +57,9 @@ function Summary({ list, index, onDone }: { list: Mon[]; index: number; onDone: 
         <div className="small">Lv{m.level}</div>
         <MonImg species={m.species} view="front" shiny={isShiny(m)} className="sum-sprite" />
         {isShiny(m) && <div className="shiny-mark">★ 이로치</div>}
+        <div className="sum-item small">
+          <span className="held-mark">✦</span> {m.item ? itemData(m.item).name : '지닌 도구 없음'}
+        </div>
       </div>
       <Frame className="sum-body">
         {page === 0 && (
