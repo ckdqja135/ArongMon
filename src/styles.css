@@ -509,10 +509,15 @@ b { font-weight: normal; color: #2858a8; }
 @media (hover: none), (max-width: 700px) {
   .controls { display: flex; }
 }
+/* 키보드 안내는 키보드가 있는 PC에서만 */
+@media (hover: none) {
+  .keys { display: none; }
+}
 .pad { background: #3a3f58; border: 2px solid #5a6080; color: #cfd4ec; font-family: Galmuri9; font-size: 10px; touch-action: none; }
 .pad:active { background: #5a6080; }
-.dpad { position: relative; width: 120px; height: 120px; }
-.dpad .pad { position: absolute; width: 40px; height: 40px; border-radius: 6px; }
+.dpad { position: relative; width: 120px; height: 120px; touch-action: none; }
+.dpad .pad { position: absolute; width: 40px; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #8a90b0; pointer-events: none; }
+.dpad .pad.on { background: #5a6080; color: #e8ecff; }
 .dpad .up { left: 40px; top: 0; }
 .dpad .down { left: 40px; bottom: 0; }
 .dpad .left { left: 0; top: 40px; }

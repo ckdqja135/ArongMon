@@ -9,6 +9,9 @@ import { askName } from './screens/NameInput';
 import { openSlots } from './screens/SlotScreen';
 import { Frame, Menu, MonImg } from './widgets';
 
+/** 손가락으로 조작하는 기기인지 (화면 버튼이 보이는 기기) */
+const touchUI = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
+
 export function Title() {
   useEffect(() => playMusic('title'), []);
   const [stage, setStage] = useState<'press' | 'menu'>('press');
@@ -37,7 +40,8 @@ export function Title() {
         <MonImg species="arong3" view="front" className="title-arong" />
       </div>
       {stage === 'press' ? (
-        <div className="press-start">PRESS START</div>
+        // 휴대폰은 화면의 START 버튼, PC는 키보드라 Z·스페이스(A)로 안내한다
+        <div className="press-start">{touchUI ? 'PRESS START' : 'Z 또는 스페이스를 누르세요'}</div>
       ) : (
         <Frame className="title-menu">
           <Menu items={saved ? ['이어서 하기', '처음부터 하기'] : ['처음부터 하기', '기록 가져오기']} onSelect={start} onCancel={() => setStage('press')} />
