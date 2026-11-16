@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { josa } from '../../engine/josa';
 import { useButtons } from '../../engine/input';
-import { G } from '../../game/game';
-import { setSoundEnabled } from '../../engine/sound';
+import { G, musicFor } from '../../game/game';
+import { playMusic, setSoundEnabled } from '../../engine/sound';
 import { settings } from '../../game/settings';
 import { say } from '../dialog';
 import { openOverlay } from '../overlay';
 import { BadgeImg, Frame, Menu } from '../widgets';
 import { openBag } from './BagScreen';
+import { openCredits } from './Credits';
 import { openMap } from './MapScreen';
 import { openPhone } from './PhoneScreen';
 import { openDex } from './DexScreen';
@@ -40,6 +41,15 @@ export async function openStartMenu() {
           // 공중날기로 고른 마을이 있으면 메뉴를 다 닫고 날아간다
           const town = await openMap();
           if (town) G.afterMenu = () => G.flyTo(town);
+        },
+      });
+    // 엔딩을 본 기록: 엔딩 크레딧을 다시 볼 수 있다 (진행은 그대로, 다 보면 원래 음악으로)
+    if (G.flag('champion'))
+      entries.push({
+        label: '엔딩 보기',
+        run: async () => {
+          await openCredits();
+          playMusic(musicFor(G.world.map));
         },
       });
     entries.push({ label: G.player, run: openCard });
